@@ -105,6 +105,8 @@ class Sourccey(Robot):
         # neutral fallback; using +100 here could issue an unintended full-up
         # command when the first ADC read was temporarily unavailable.
         self._last_known_z_pos = 0.0
+        self._z_command_target = 0.0
+        self._last_z_velocity_command_t = time.monotonic()
 
     def __del__(self):
         # Destructors can run on partially initialized objects if __init__ raised.
@@ -120,12 +122,13 @@ class Sourccey(Robot):
     @property
     def _state_ft(self) -> dict[str, type]:
         return {
-            f"{motor}.pos": float for motor in self.left_arm.bus.motors} | {
-            f"{motor}.pos": float for motor in self.right_arm.bus.motors} | {
+            f"left_{motor}.pos": float for motor in self.left_arm.bus.motors} | {
+            f"right_{motor}.pos": float for motor in self.right_arm.bus.motors} | {
                 "z.pos": float,
                 "x.vel": float,
                 "y.vel": float,
                 "theta.vel": float,
+                "z.vel": float,
             }
 
     @property
@@ -140,7 +143,11 @@ class Sourccey(Robot):
 
     @cached_property
     def action_features(self) -> dict[str, type]:
-        return self._state_ft
+        return {
+            **self._state_ft,
+            "untorque_left": bool,
+            "untorque_right": bool,
+        }
 
     @property
     def is_connected(self) -> bool:
@@ -165,6 +172,7 @@ class Sourccey(Robot):
             self.z_actuator.connect()
             try:
                 self._last_known_z_pos = float(self.z_actuator.read_position())
+                self._z_command_target = self._last_known_z_pos
             except Exception as exc:
                 logger.warning("Could not initialize Z position from the sensor: %s", exc)
         except RuntimeError as exc:
@@ -334,6 +342,7 @@ class Sourccey(Robot):
                 except Exception as exc:
                     logger.warning("Failed to read z actuator position; reusing last good value: %s", exc)
             obs_dict["z.pos"] = float(self._last_known_z_pos)
+            obs_dict["z.vel"] = 0.0
 
             for cam_key in self.cameras.keys():
                 try:
@@ -389,12 +398,29 @@ class Sourccey(Robot):
                 base_goal_vel.get("theta.vel", 0.0)
             )
 
-            # Z actuator is position-controlled; drive toward the latest z.pos target (non-blocking).
+            # Z accepts either an absolute position or a normalized velocity.
             if "z.pos" in base_goal_pos and self.z_actuator.use_z_actuator:
                 try:
-                    self.z_actuator.move_to_position(float(base_goal_pos["z.pos"]), instant=True)
+                    self._z_command_target = float(np.clip(base_goal_pos["z.pos"], -100.0, 100.0))
+                    self.z_actuator.move_to_position(self._z_command_target, instant=True)
                 except Exception as e:
                     logger.warning(f"Failed to command z actuator: {e}")
+            elif "z.vel" in base_goal_vel and self.z_actuator.use_z_actuator:
+                try:
+                    now = time.monotonic()
+                    dt = max(0.0, min(now - self._last_z_velocity_command_t, 0.1))
+                    self._last_z_velocity_command_t = now
+                    z_velocity = float(np.clip(base_goal_vel["z.vel"], -1.0, 1.0))
+                    self._z_command_target = float(
+                        np.clip(
+                            self._z_command_target + z_velocity * self.config.z_velocity_units_per_s * dt,
+                            -100.0,
+                            100.0,
+                        )
+                    )
+                    self.z_actuator.move_to_position(self._z_command_target, instant=True)
+                except Exception as e:
+                    logger.warning(f"Failed to apply Z velocity command: {e}")
 
             dc_motors_action = {**wheel_action }
             self.dc_motors_controller.set_velocities(dc_motors_action)

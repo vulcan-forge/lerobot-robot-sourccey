@@ -46,6 +46,7 @@ class SourcceyProtobuf:
             base_action.x_vel = float(action.get("x.vel", 0.0))
             base_action.y_vel = float(action.get("y.vel", 0.0))
             base_action.theta_vel = float(action.get("theta.vel", 0.0))
+            base_action.z_vel = float(action.get("z.vel", 0.0))
             robot_action.base_target_velocity.CopyFrom(base_action)
 
             # Preserve field presence: an omitted z.pos means "keep the current
@@ -101,6 +102,7 @@ class SourcceyProtobuf:
             base_vel.x_vel = observation.get("x.vel", 0.0)
             base_vel.y_vel = observation.get("y.vel", 0.0)
             base_vel.theta_vel = observation.get("theta.vel", 0.0)
+            base_vel.z_vel = observation.get("z.vel", 0.0)
 
             # Set base position (linear actuator)
             base_pos = msg.base_position
@@ -159,6 +161,7 @@ class SourcceyProtobuf:
                 "x.vel": base_vel.x_vel,
                 "y.vel": base_vel.y_vel,
                 "theta.vel": base_vel.theta_vel,
+                "z.vel": base_vel.z_vel,
             })
 
             # Absence is meaningful: the host leaves its existing Z target alone.
@@ -207,6 +210,7 @@ class SourcceyProtobuf:
             observation["x.vel"] = base_vel.x_vel
             observation["y.vel"] = base_vel.y_vel
             observation["theta.vel"] = base_vel.theta_vel
+            observation["z.vel"] = base_vel.z_vel
 
             # Z position (linear actuator)
             observation["z.pos"] = robot_state.base_position.z_pos
@@ -231,4 +235,3 @@ class SourcceyProtobuf:
         except Exception as e:
             logger.error(f"Failed to convert protobuf to observation: {e}")
             raise
-

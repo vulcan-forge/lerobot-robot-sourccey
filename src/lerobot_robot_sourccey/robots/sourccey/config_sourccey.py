@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 
 from lerobot.cameras.configs import CameraConfig
 from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
@@ -23,54 +23,33 @@ from lerobot.robots.config import RobotConfig
 from .modules.slam.config import SlamInputConfig
 
 
-def sourccey_cameras_config() -> dict[str, CameraConfig]:
-    config = {
-         "front_left": OpenCVCameraConfig(
-             index_or_path="/dev/cameraFrontLeft",
-             fps=30,
-             width=320,
-             height=240,
-             auto_reconnect=True,
-             max_consecutive_read_failures=2,
-             fast_reconnect_interval_s=0.05,
-             fast_reconnect_window_s=2.0,
-             reconnect_interval_s=0.5,
-         ),
-         "front_right": OpenCVCameraConfig(
-             index_or_path="/dev/cameraFrontRight",
-             fps=30,
-             width=320,
-             height=240,
-             auto_reconnect=True,
-             max_consecutive_read_failures=2,
-             fast_reconnect_interval_s=0.05,
-             fast_reconnect_window_s=2.0,
-             reconnect_interval_s=0.5,
-         ),
-         "wrist_left": OpenCVCameraConfig(
-             index_or_path="/dev/cameraWristLeft",
-             fps=30,
-             width=320,
-             height=240,
-             auto_reconnect=True,
-             max_consecutive_read_failures=2,
-             fast_reconnect_interval_s=0.05,
-             fast_reconnect_window_s=2.0,
-             reconnect_interval_s=0.5,
-         ),
-         "wrist_right": OpenCVCameraConfig(
-             index_or_path="/dev/cameraWristRight",
-             fps=30,
-             width=320,
-             height=240,
-             auto_reconnect=True,
-             max_consecutive_read_failures=2,
-             fast_reconnect_interval_s=0.05,
-             fast_reconnect_window_s=2.0,
-             reconnect_interval_s=0.5,
-         ),
+def _opencv_camera(index_or_path: str) -> OpenCVCameraConfig:
+    """Create a camera config on both stock LeRobot and the Vulcan camera fork."""
+    values = {
+        "index_or_path": index_or_path,
+        "fps": 30,
+        "width": 320,
+        "height": 240,
     }
-    return config
+    reconnect_values = {
+        "auto_reconnect": True,
+        "max_consecutive_read_failures": 2,
+        "fast_reconnect_interval_s": 0.05,
+        "fast_reconnect_window_s": 2.0,
+        "reconnect_interval_s": 0.5,
+    }
+    supported = {item.name for item in fields(OpenCVCameraConfig)}
+    values.update({key: value for key, value in reconnect_values.items() if key in supported})
+    return OpenCVCameraConfig(**values)
+
+
+def sourccey_cameras_config() -> dict[str, CameraConfig]:
+    return {
+        "front_left": _opencv_camera("/dev/cameraFrontLeft"),
+        "front_right": _opencv_camera("/dev/cameraFrontRight"),
+        "wrist_left": _opencv_camera("/dev/cameraWristLeft"),
+        "wrist_right": _opencv_camera("/dev/cameraWristRight"),
+    }
 
 def sourccey_motor_models() -> dict[str, str]:
     return {
@@ -120,6 +99,7 @@ class SourcceyConfig(RobotConfig):
     z_maximum_command: float = 1.0
     z_position_deadband: float = 0.75
     z_control_hz: float = 50.0
+    z_velocity_units_per_s: float = 25.0
 
     # Optional
     left_arm_disable_torque_on_disconnect: bool = True
@@ -240,4 +220,3 @@ class SourcceyClientConfig(RobotConfig):
             self.slam.stereo_right_key = self.slam_stereo_right_key
         if self.slam_jpeg_quality is not None:
             self.slam.jpeg_quality = self.slam_jpeg_quality
-

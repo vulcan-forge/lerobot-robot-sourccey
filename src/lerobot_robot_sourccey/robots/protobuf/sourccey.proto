@@ -23,6 +23,7 @@ message BaseVelocity {
     float x_vel = 1;
     float y_vel = 2;
     float theta_vel = 3;
+    float z_vel = 4;          // Linear actuator velocity command
 }
 
 // Base position information (linear actuator)
@@ -58,4 +59,3 @@ message SourcceyRobotAction {
     bool untorque_left = 5;
     bool untorque_right = 6;
 }
-

@@ -42,7 +42,7 @@ class IMUReporter:
             logging.warning("IMU reporter disabled: imu_print_interval_s must be > 0")
             return
         try:
-            from lerobot.sensors.imu import AdafruitLSM6DSOXLIS3MDLIMU, IMUConfig
+            from lerobot_robot_sourccey.sensors.imu import AdafruitLSM6DSOXLIS3MDLIMU, IMUConfig
         except Exception as exc:  # noqa: BLE001
             logging.warning("IMU reporter unavailable (import failed): %s", exc)
             return
@@ -97,4 +97,3 @@ class IMUReporter:
                 logging.warning("IMU reporter read error: %s", exc)
 
             self._stop_event.wait(interval_s)
-

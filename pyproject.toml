@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lerobot_robot_sourccey"
-version = "0.1.0"
+version = "0.2.0"
 description = "Sourccey robot and teleoperator integration for LeRobot"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -21,23 +21,38 @@ classifiers = [
 ]
 dependencies = [
     "lerobot[feetech]>=0.6,<0.7",
-    "grpcio>=1.73,<2",
     "numpy>=1.24",
     "opencv-python-headless>=4.9",
-    "protobuf>=5,<7",
+    "protobuf>=6.31,<7",
+    "pynput>=1.7.7",
     "pyzmq>=26,<28",
     "websockets>=15,<17",
 ]
 
 [project.optional-dependencies]
+record = [
+    "lerobot[core-scripts]>=0.6,<0.7",
+]
 hardware = [
     "gpiozero>=2.0.1; sys_platform == 'linux'",
     "lgpio>=0.2.2; sys_platform == 'linux'",
+    "smbus2>=0.4.3; sys_platform == 'linux'",
+    "adafruit-blinka>=8.52.0; sys_platform == 'linux'",
+    "adafruit-circuitpython-lsm6ds>=4.6.1; sys_platform == 'linux'",
+    "adafruit-circuitpython-lis3mdl>=1.2.0; sys_platform == 'linux'",
 ]
 dev = [
     "build>=1.2",
+    "grpcio-tools>=1.73,<2",
     "pytest>=8",
 ]
+
+[project.scripts]
+sourccey-host = "lerobot_robot_sourccey.robots.sourccey.sourccey_host:main"
+sourccey-battery = "lerobot_robot_sourccey.battery.battery:main"
+sourccey-battery-check = "lerobot_robot_sourccey.battery.check_bq34z100:main"
+sourccey-battery-configure = "lerobot_robot_sourccey.battery.configure_bq34z100:main"
+sourccey-battery-flash = "lerobot_robot_sourccey.battery.golden.flash_bq34z100:main"
 
 [project.urls]
 Repository = "https://github.com/vulcan-forge/lerobot-robot-sourccey"
@@ -48,8 +63,15 @@ where = ["src"]
 include = ["lerobot_robot_sourccey*"]
 
 [tool.setuptools.package-data]
-lerobot_robot_sourccey = ["**/*.json", "**/*.proto", "**/*.pyi", "**/*.urdf"]
+lerobot_robot_sourccey = [
+    "**/*.json",
+    "**/*.proto",
+    "**/*.pyi",
+    "**/*.urdf",
+    "**/*.md",
+    "**/*.fs",
+    "**/*.srec",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

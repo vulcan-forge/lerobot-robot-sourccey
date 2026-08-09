@@ -13,6 +13,10 @@ def test_plugin_registers_sourccey_devices() -> None:
         TeleoperatorConfig.get_choice_class("bi_sourccey_leader")
         is lerobot_robot_sourccey.BiSourcceyLeaderConfig
     )
+    assert (
+        TeleoperatorConfig.get_choice_class("sourccey_teleoperator")
+        is lerobot_robot_sourccey.SourcceyTeleoperatorConfig
+    )
 
 
 def test_device_names_match_config_names() -> None:
@@ -22,6 +26,10 @@ def test_device_names_match_config_names() -> None:
         (lerobot_robot_sourccey.SourcceyFollowerConfig, lerobot_robot_sourccey.SourcceyFollower),
         (lerobot_robot_sourccey.SourcceyLeaderConfig, lerobot_robot_sourccey.SourcceyLeader),
         (lerobot_robot_sourccey.BiSourcceyLeaderConfig, lerobot_robot_sourccey.BiSourcceyLeader),
+        (
+            lerobot_robot_sourccey.SourcceyTeleoperatorConfig,
+            lerobot_robot_sourccey.SourcceyTeleoperator,
+        ),
     )
 
     for config_class, device_class in pairs:

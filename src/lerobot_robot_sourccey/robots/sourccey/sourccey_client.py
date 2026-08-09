@@ -158,6 +158,7 @@ class SourcceyClient(Robot):
                 "x.vel",
                 "y.vel",
                 "theta.vel",
+                "z.vel",
             ),
             float,
         )
@@ -176,7 +177,11 @@ class SourcceyClient(Robot):
 
     @cached_property
     def action_features(self) -> dict[str, type]:
-        return self._state_ft
+        return {
+            **self._state_ft,
+            "untorque_left": bool,
+            "untorque_right": bool,
+        }
 
     @cached_property
     def cameras(self) -> dict[str, Any]:
@@ -365,7 +370,7 @@ class SourcceyClient(Robot):
         # Fill keyboard-owned / optional controls when teleop provides arm-only
         # actions (e.g. bi_sourccey_leader in lerobot-record). Mutate in-place so
         # upstream callers that reuse the dict (dataset logging) see complete keys.
-        if "z.pos" not in action:
+        if "z.pos" not in action and "z.vel" not in action:
             z_hold = self.last_remote_state.get("z.pos", self._z_pos_cmd)
             action["z.pos"] = float(z_hold)
         if "x.vel" not in action:
