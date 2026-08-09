@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lerobot_robot_sourccey"
+version = "0.1.0"
+description = "Sourccey robot and teleoperator integration for LeRobot"
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+license = "Apache-2.0"
+authors = [{ name = "Vulcan Robotics, Inc." }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "lerobot[feetech]>=0.6,<0.7",
+    "grpcio>=1.73,<2",
+    "numpy>=1.24",
+    "opencv-python-headless>=4.9",
+    "protobuf>=5,<7",
+    "pyzmq>=26,<28",
+    "websockets>=15,<17",
+]
+
+[project.optional-dependencies]
+hardware = [
+    "gpiozero>=2.0.1; sys_platform == 'linux'",
+    "lgpio>=0.2.2; sys_platform == 'linux'",
+]
+dev = [
+    "build>=1.2",
+    "pytest>=8",
+]
+
+[project.urls]
+Repository = "https://github.com/vulcan-forge/lerobot-robot-sourccey"
+Issues = "https://github.com/vulcan-forge/lerobot-robot-sourccey/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["lerobot_robot_sourccey*"]
+
+[tool.setuptools.package-data]
+lerobot_robot_sourccey = ["**/*.json", "**/*.proto", "**/*.pyi", "**/*.urdf"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
