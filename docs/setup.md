@@ -8,25 +8,44 @@
 - The correct serial ports and device permissions for the leader arms
 - [`uv`](https://docs.astral.sh/uv/) on the controller computer
 
+## Quick install
+
+On Sourccey's Linux computer, install the robot-host profile:
+
+```bash
+uv pip install "lerobot-robot-sourccey[robot] @ git+https://github.com/vulcan-forge/lerobot-robot-sourccey.git@main"
+```
+
+On the desktop/controller computer, install the teleoperation, recording, and
+dataset profile:
+
+```bash
+uv pip install "lerobot-robot-sourccey[desktop] @ git+https://github.com/vulcan-forge/lerobot-robot-sourccey.git@main"
+```
+
+Replace `main` with the first release tag containing these profiles for a
+repeatable installation. Tag `0.2.2` predates the `robot` and `desktop` profile
+names; use its `hardware` and `record` extras instead.
+
 ## Install from PyPI
 
 After a release has been published, add Sourccey to a uv-managed LeRobot
 project with:
 
 ```bash
-uv add "lerobot-robot-sourccey[record]"
+uv add "lerobot-robot-sourccey[desktop]"
 ```
 
 To install it into an already active environment without changing a project:
 
 ```bash
-uv pip install "lerobot-robot-sourccey[record]"
+uv pip install "lerobot-robot-sourccey[desktop]"
 ```
 
 On Sourccey's Linux computer, install the hardware dependencies instead:
 
 ```bash
-uv pip install "lerobot-robot-sourccey[hardware]"
+uv pip install "lerobot-robot-sourccey[robot]"
 ```
 
 ## Install directly from GitHub
@@ -35,15 +54,15 @@ Before the first PyPI release—or when testing an unreleased revision—install
 directly from the public repository:
 
 ```bash
-uv pip install "lerobot-robot-sourccey[record] @ git+https://github.com/vulcan-forge/lerobot-robot-sourccey.git@main"
+uv pip install "lerobot-robot-sourccey[desktop] @ git+https://github.com/vulcan-forge/lerobot-robot-sourccey.git@main"
 ```
 
 For repeatable deployments, replace `main` with a release tag such as
-`v0.2.0`. The robot host can install the same tagged source with the `hardware`
+`0.2.2`. The robot host can install the same tagged source with the `hardware`
 extra:
 
 ```bash
-uv pip install "lerobot-robot-sourccey[hardware] @ git+https://github.com/vulcan-forge/lerobot-robot-sourccey.git@v0.2.0"
+uv pip install "lerobot-robot-sourccey[hardware] @ git+https://github.com/vulcan-forge/lerobot-robot-sourccey.git@0.2.2"
 ```
 
 ## Install locally with the LeRobot fork

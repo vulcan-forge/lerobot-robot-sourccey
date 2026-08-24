@@ -20,10 +20,9 @@ sourccey-battery-configure info
 sourccey-battery-configure setup-4s-lifepo4
 ```
 
-Golden-image flashing is available through
-`sourccey-battery-configure flash-golden` or `sourccey-battery-flash`. These
-commands require direct I2C access to the BQ34Z100. Start with their information
-or dry-run modes before writing to the gauge.
+Golden-image flashing is available through `sourccey-battery-flash`. This
+command requires direct I2C access to the BQ34Z100. Start with `--dry-run`
+before writing to the gauge.
 
 See the [battery-specific guide](../src/lerobot_robot_sourccey/battery/README.md)
 for configuration, diagnostics, and recovery details.

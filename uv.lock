@@ -13,11 +13,11 @@ name = "adafruit-blinka"
 version = "9.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-circuitpython-typing" },
-    { name = "adafruit-platformdetect" },
-    { name = "adafruit-pureio" },
-    { name = "binho-host-adapter" },
-    { name = "pyftdi" },
+    { name = "adafruit-circuitpython-typing", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-platformdetect", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-pureio", marker = "sys_platform != 'win32'" },
+    { name = "binho-host-adapter", marker = "sys_platform != 'win32'" },
+    { name = "pyftdi", marker = "sys_platform != 'win32'" },
     { name = "sysv-ipc", marker = "platform_machine != 'mips' and sys_platform == 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ae/ee/63370e529cb21a56406b58773ab2e97c3bffd8dec391746df1fe238e3c1e/adafruit_blinka-9.2.0.tar.gz", hash = "sha256:0358f02840f91127246d9c5fa6d49660e2ab1134cc4e56fd5d88ce4c39a50942", size = 937569, upload-time = "2026-07-30T18:02:52.711Z" }
@@ -30,8 +30,8 @@ name = "adafruit-circuitpython-busdevice"
 version = "5.2.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "adafruit-circuitpython-typing" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-typing", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/40/c0/f789bfc16d2e7eed23171f264b961ceb25314ba92d733be5bd47a4ecb23e/adafruit_circuitpython_busdevice-5.2.17.tar.gz", hash = "sha256:01887ba0056d3635536f0bf1e580a2969c67fc2c4c7b42a4093bcf7a3308bc9b", size = 24423, upload-time = "2026-04-23T21:18:13.438Z" }
 wheels = [
@@ -43,7 +43,7 @@ name = "adafruit-circuitpython-connectionmanager"
 version = "3.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a0/29/1653838bc0e5c6119fa2b03edb58b592a2475e7cf99810064a99e5eb8994/adafruit_circuitpython_connectionmanager-3.1.8.tar.gz", hash = "sha256:ce7436d62ac26312fbd2fc7d8f70ab0582a7c7807d7033ae5bd5cb53e4f66f3b", size = 33828, upload-time = "2026-04-23T21:18:42.138Z" }
 wheels = [
@@ -55,9 +55,9 @@ name = "adafruit-circuitpython-lis3mdl"
 version = "1.2.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "adafruit-circuitpython-busdevice" },
-    { name = "adafruit-circuitpython-register" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-busdevice", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-register", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b4/3c/eb1bcaa675277cb55d9395195eba7e8836cd74a7dd5721ad59c49650d03a/adafruit_circuitpython_lis3mdl-1.2.8.tar.gz", hash = "sha256:e4ba8dbf93c0763279090584d36b80361e95ee92ea97c473ade8282c2e81bb94", size = 26748, upload-time = "2026-04-23T20:59:12.726Z" }
 wheels = [
@@ -69,9 +69,9 @@ name = "adafruit-circuitpython-lsm6ds"
 version = "4.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "adafruit-circuitpython-busdevice" },
-    { name = "adafruit-circuitpython-register" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-busdevice", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-register", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/43/45/e84a63586df1ffdac4e6f6484beb781a364138a5b455d538dacb4d4880f9/adafruit_circuitpython_lsm6ds-4.6.3.tar.gz", hash = "sha256:ade09692bac623b396493be26673c2730c43874099a8e34ef5108c11b0458eb9", size = 29764, upload-time = "2026-04-23T20:59:31.967Z" }
 wheels = [
@@ -83,10 +83,10 @@ name = "adafruit-circuitpython-register"
 version = "1.12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "adafruit-circuitpython-busdevice" },
-    { name = "adafruit-circuitpython-typing" },
-    { name = "typing-extensions" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-busdevice", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-typing", marker = "sys_platform != 'win32'" },
+    { name = "typing-extensions", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/79/04/365a3791dd8a0de1b3740bfa5780e9b22201af9049ec185af1580800b313/adafruit_circuitpython_register-1.12.1.tar.gz", hash = "sha256:ed00f49d40fc7cb1b64dc2fefed2a8ca463cc728959e70718ed7152f6591734d", size = 32243, upload-time = "2026-07-28T14:02:15.344Z" }
 wheels = [
@@ -98,8 +98,8 @@ name = "adafruit-circuitpython-requests"
 version = "4.1.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "adafruit-circuitpython-connectionmanager" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-connectionmanager", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/bc/5c/cb31dd0a6e56a92bd9bf672539ba6102204bc443fe9af9a5f8e893b99169/adafruit_circuitpython_requests-4.1.17.tar.gz", hash = "sha256:7259976be340324d34da1ba6f4b935430b46ceece2e5c1632387a24e6f94e9a3", size = 67777, upload-time = "2026-04-23T21:24:48.423Z" }
 wheels = [
@@ -111,10 +111,10 @@ name = "adafruit-circuitpython-typing"
 version = "1.12.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "adafruit-blinka" },
-    { name = "adafruit-circuitpython-busdevice" },
-    { name = "adafruit-circuitpython-requests" },
-    { name = "typing-extensions" },
+    { name = "adafruit-blinka", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-busdevice", marker = "sys_platform != 'win32'" },
+    { name = "adafruit-circuitpython-requests", marker = "sys_platform != 'win32'" },
+    { name = "typing-extensions", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/65/a2/40a3440aed2375371507af668570b68523ee01db9c25c47ce5a05883170e/adafruit_circuitpython_typing-1.12.3.tar.gz", hash = "sha256:63f196f834e47842bcd4cf8c37aaa0c61e1aeb5d07f056c875fc3016cda91a12", size = 25603, upload-time = "2025-10-27T18:17:38.56Z" }
 wheels = [
@@ -269,7 +269,7 @@ name = "binho-host-adapter"
 version = "0.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyserial" },
+    { name = "pyserial", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/68/36/29b7b896e83e195fac6d64ccff95c0f24a18ee86e7437a22e60e0331d90a/binho-host-adapter-0.1.6.tar.gz", hash = "sha256:1e6da7a84e208c13b5f489066f05774bff1d593d0f5bf1ca149c2b8e83eae856", size = 10068, upload-time = "2020-06-04T19:38:11.789Z" }
 wheels = [
@@ -459,7 +459,7 @@ name = "colorzero"
 version = "2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "setuptools" },
+    { name = "setuptools", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b3/ca/688824a06e8c4d04c7d2fd2af2d8da27bed51af20ee5f094154e1d680334/colorzero-2.0.tar.gz", hash = "sha256:e7d5a5c26cd0dc37b164ebefc609f388de24f8593b659191e12d85f8f9d5eb58", size = 25382, upload-time = "2021-03-15T23:42:23.261Z" }
 wheels = [
@@ -730,7 +730,7 @@ name = "gpiozero"
 version = "2.0.1.post3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorzero" },
+    { name = "colorzero", marker = "sys_platform != 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/67/63/864a3c36842cf7b05808aadf906763a024a1b13f2a4c8144e3163de91255/gpiozero-2.0.1.post3.tar.gz", hash = "sha256:745feab6df463ac2e9de10c67e2dd9f396e668ba4e281e92381d6c460100a8f7", size = 168403, upload-time = "2026-07-27T10:03:32.628Z" }
 wheels = [
@@ -980,7 +980,7 @@ feetech = [
 
 [[package]]
 name = "lerobot-robot-sourccey"
-version = "0.2.0"
+version = "0.2.2"
 source = { editable = "." }
 dependencies = [
     { name = "lerobot", extra = ["feetech"] },
@@ -993,6 +993,24 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "adafruit-blinka", marker = "sys_platform == 'linux'" },
+    { name = "adafruit-circuitpython-lis3mdl", marker = "sys_platform == 'linux'" },
+    { name = "adafruit-circuitpython-lsm6ds", marker = "sys_platform == 'linux'" },
+    { name = "build" },
+    { name = "gpiozero", marker = "sys_platform == 'linux'" },
+    { name = "grpcio-tools" },
+    { name = "lerobot", extra = ["core-scripts"] },
+    { name = "lgpio", marker = "sys_platform == 'linux'" },
+    { name = "pytest" },
+    { name = "smbus2", marker = "sys_platform == 'linux'" },
+]
+dataset = [
+    { name = "lerobot", extra = ["core-scripts"] },
+]
+desktop = [
+    { name = "lerobot", extra = ["core-scripts"] },
+]
 dev = [
     { name = "build" },
     { name = "grpcio-tools" },
@@ -1009,6 +1027,14 @@ hardware = [
 record = [
     { name = "lerobot", extra = ["core-scripts"] },
 ]
+robot = [
+    { name = "adafruit-blinka", marker = "sys_platform == 'linux'" },
+    { name = "adafruit-circuitpython-lis3mdl", marker = "sys_platform == 'linux'" },
+    { name = "adafruit-circuitpython-lsm6ds", marker = "sys_platform == 'linux'" },
+    { name = "gpiozero", marker = "sys_platform == 'linux'" },
+    { name = "lgpio", marker = "sys_platform == 'linux'" },
+    { name = "smbus2", marker = "sys_platform == 'linux'" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -1018,8 +1044,12 @@ requires-dist = [
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.2" },
     { name = "gpiozero", marker = "sys_platform == 'linux' and extra == 'hardware'", specifier = ">=2.0.1" },
     { name = "grpcio-tools", marker = "extra == 'dev'", specifier = ">=1.73,<2" },
+    { name = "lerobot", extras = ["core-scripts"], marker = "extra == 'dataset'", specifier = ">=0.6,<0.7" },
     { name = "lerobot", extras = ["core-scripts"], marker = "extra == 'record'", specifier = ">=0.6,<0.7" },
     { name = "lerobot", extras = ["feetech"], specifier = ">=0.6,<0.7" },
+    { name = "lerobot-robot-sourccey", extras = ["hardware"], marker = "extra == 'robot'" },
+    { name = "lerobot-robot-sourccey", extras = ["record", "dataset"], marker = "extra == 'desktop'" },
+    { name = "lerobot-robot-sourccey", extras = ["robot", "desktop", "dev"], marker = "extra == 'all'" },
     { name = "lgpio", marker = "sys_platform == 'linux' and extra == 'hardware'", specifier = ">=0.2.2" },
     { name = "numpy", specifier = ">=1.24" },
     { name = "opencv-python-headless", specifier = ">=4.9" },
@@ -1030,7 +1060,7 @@ requires-dist = [
     { name = "smbus2", marker = "sys_platform == 'linux' and extra == 'hardware'", specifier = ">=0.4.3" },
     { name = "websockets", specifier = ">=15,<17" },
 ]
-provides-extras = ["record", "hardware", "dev"]
+provides-extras = ["record", "dataset", "hardware", "dev", "robot", "desktop", "all"]
 
 [[package]]
 name = "lgpio"
@@ -1627,8 +1657,8 @@ name = "pyftdi"
 version = "0.57.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyserial" },
-    { name = "pyusb" },
+    { name = "pyserial", marker = "sys_platform != 'win32'" },
+    { name = "pyusb", marker = "sys_platform != 'win32'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7b/de/260694fa63dab6629c6ba7c2315de64dbd766eb761198b61fba96cbe7ea4/pyftdi-0.57.2-py3-none-any.whl", hash = "sha256:dec3acdc262594d8b1850a6aee608b861c2973f90011faf5cccae3107d3c67a4", size = 146319, upload-time = "2026-06-02T16:14:37.818Z" },

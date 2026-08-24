@@ -8,9 +8,10 @@ single large README.
    ports, calibrate, and teleoperate.
 3. [Recording datasets](recording.md) — collect demonstrations after manual
    control is working.
-4. [Hardware utilities](hardware.md) — work with the battery, GPIO, I2C, IMU,
+4. [Dataset tools](datasets.md) — combine, audit, repair, and clean recorded datasets.
+5. [Hardware utilities](hardware.md) — work with the battery, GPIO, I2C, IMU,
    cameras, and stable device names.
-5. [Development and distribution](development.md) — run checks, build the
+6. [Development and distribution](development.md) — run checks, build the
    package, and install it on other computers.
 
 Return to the [package overview](../README.md).

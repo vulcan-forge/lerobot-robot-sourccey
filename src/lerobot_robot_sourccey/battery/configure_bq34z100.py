@@ -19,16 +19,9 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Iterable
-
-from lerobot_robot_sourccey.battery.golden.flash_bq34z100 import (
-    DEFAULT_PROFILE_FILES,
-    run_flashstream_file,
-)
 
 
 I2C_ADDR_DEFAULT = 0x55
@@ -584,31 +577,6 @@ def cmd_setup_4s_lifepo4(gauge: BQ34Z100R2, args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_flash_golden(_: BQ34Z100R2, args: argparse.Namespace) -> int:
-    fs_file = Path(args.fs_file) if args.fs_file is not None else DEFAULT_PROFILE_FILES[args.profile]
-    if not fs_file.exists():
-        raise SystemExit(f"Flashstream file does not exist: {fs_file}")
-
-    print(
-        f"Flashing profile={args.profile} file={fs_file} on I2C bus={args.bus}. "
-        "NOTE: flashstream file controls device addresses/mode transitions."
-    )
-    stats = run_flashstream_file(
-        fs_file=fs_file,
-        bus=args.bus,
-        dry_run=bool(args.dry_run),
-        strict_compare=bool(args.strict_compare),
-        progress_every=int(args.progress_every),
-        quiet=bool(args.quiet),
-    )
-    print(
-        "Flash summary: "
-        f"commands={stats.commands_total}, writes={stats.writes}, compares={stats.compares}, "
-        f"delays={stats.delays}, elapsed_s={stats.elapsed_s:.1f}"
-    )
-    return 0
-
-
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Configure bq34z100 (-G1 / -R2) data flash over I2C")
     p.add_argument("--bus", type=int, default=1, help="I2C bus (default: 1)")
@@ -745,58 +713,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Seconds to wait for UpdateStatus=0x04 after IT_ENABLE (default: 4.0)",
     )
 
-    p_flash = sub.add_parser(
-        "flash-golden",
-        help="Program gauge from TI flashstream (.df.fs/.bq.fs) in battery/golden/",
-    )
-    p_flash.add_argument(
-        "--profile",
-        choices=sorted(DEFAULT_PROFILE_FILES),
-        default="df",
-        help="Built-in flashstream profile when --fs-file is not provided (default: df)",
-    )
-    p_flash.add_argument(
-        "--fs-file",
-        type=Path,
-        default=None,
-        help="Explicit .df.fs/.bq.fs file path to flash",
-    )
-    p_flash.add_argument(
-        "--strict-compare",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Stop on compare mismatch from C: lines (default: enabled)",
-    )
-    p_flash.add_argument(
-        "--progress-every",
-        type=int,
-        default=200,
-        help="Print progress every N commands (0 disables periodic progress)",
-    )
-    p_flash.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Reduce non-progress output from flasher",
-    )
-    p_flash.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Parse and preview flashstream actions without I2C writes",
-    )
-
     return p
 
 
 def main() -> int:
     parser = build_parser()
-    argv = sys.argv[1:]
-    subcommands = {"info", "list-fields", "read-field", "write-field", "set-divider", "setup-4s-lifepo4", "flash-golden"}
-
-    # If no subcommand is provided, default to the standard setup profile.
-    if not any(token in subcommands for token in argv) and "--help" not in argv and "-h" not in argv:
-        argv = [*argv, "setup-4s-lifepo4"]
-
-    args = parser.parse_args(argv)
+    args = parser.parse_args()
     gauge = BQ34Z100R2(bus_num=args.bus, address=args.address)
 
     try:
@@ -812,8 +734,6 @@ def main() -> int:
             return cmd_set_divider(gauge, args)
         if args.cmd == "setup-4s-lifepo4":
             return cmd_setup_4s_lifepo4(gauge, args)
-        if args.cmd == "flash-golden":
-            return cmd_flash_golden(gauge, args)
     except OSError as exc:
         raise SystemExit(f"I2C error (errno={getattr(exc, 'errno', None)}): {exc}") from exc
 

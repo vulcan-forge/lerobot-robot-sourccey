@@ -35,6 +35,9 @@ dependencies = [
 record = [
     "lerobot[core-scripts]>=0.6,<0.7",
 ]
+dataset = [
+    "lerobot[core-scripts]>=0.6,<0.7",
+]
 hardware = [
     "gpiozero>=2.0.1; sys_platform == 'linux'",
     "lgpio>=0.2.2; sys_platform == 'linux'",
@@ -48,6 +51,18 @@ dev = [
     "grpcio-tools>=1.73,<2",
     "pytest>=8",
 ]
+# User-facing installation profiles. Keep the lower-level extras above for
+# backward compatibility and compose them here so their dependency lists have
+# a single source of truth.
+robot = [
+    "lerobot-robot-sourccey[hardware]",
+]
+desktop = [
+    "lerobot-robot-sourccey[record,dataset]",
+]
+all = [
+    "lerobot-robot-sourccey[robot,desktop,dev]",
+]
 
 [project.scripts]
 sourccey-host = "lerobot_robot_sourccey.robots.sourccey.sourccey_host:main"
@@ -55,6 +70,11 @@ sourccey-battery = "lerobot_robot_sourccey.battery.battery:main"
 sourccey-battery-check = "lerobot_robot_sourccey.battery.check_bq34z100:main"
 sourccey-battery-configure = "lerobot_robot_sourccey.battery.configure_bq34z100:main"
 sourccey-battery-flash = "lerobot_robot_sourccey.battery.golden.flash_bq34z100:main"
+sourccey-dataset-audit-consistency = "lerobot_robot_sourccey.dataset_tools.audit_dataset_consistency:main"
+sourccey-dataset-audit-videos = "lerobot_robot_sourccey.dataset_tools.audit_video_decode_errors:main"
+sourccey-dataset-combine = "lerobot_robot_sourccey.dataset_tools.combine:main"
+sourccey-dataset-fix-consistency = "lerobot_robot_sourccey.dataset_tools.fix_dataset_consistency:main"
+sourccey-dataset-remove-feature = "lerobot_robot_sourccey.dataset_tools.remove_feature:main"
 
 [project.urls]
 Homepage = "https://github.com/vulcan-forge/lerobot-robot-sourccey"
@@ -75,6 +95,7 @@ lerobot_robot_sourccey = [
     "**/*.md",
     "**/*.fs",
     "**/*.srec",
+    "**/*.sh",
 ]
 
 [tool.pytest.ini_options]

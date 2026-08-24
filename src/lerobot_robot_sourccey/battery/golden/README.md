@@ -86,17 +86,17 @@
 Run the full firmware + data-flash image:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-golden --profile bq
+uv run sourccey-battery-flash --profile bq
 ```
 
 Run data-flash-only:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-golden --profile df
+uv run sourccey-battery-flash --profile df
 ```
 
 Run the standalone flashstream runner directly:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/golden/flash_bq34z100.py --profile bq
+uv run sourccey-battery-flash --profile bq
 ```

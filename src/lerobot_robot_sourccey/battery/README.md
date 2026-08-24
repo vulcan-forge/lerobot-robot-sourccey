@@ -6,10 +6,10 @@ If you only do one thing, follow **Quick Start** below in order.
 
 ## Files in this folder
 
-- `configure_bq34z100.py` - write/read bq34z100 Data Flash fields over I2C
-- `battery.py` - minimal frontend battery telemetry JSON
-- `check_bq34z100.py` - deep diagnostics + watch mode for learning cycle checks
-- `golden/flash_bq34z100.py` - TI FlashStream runner for `.df.fs` / `.bq.fs` files
+- `sourccey-battery-configure` - write/read bq34z100 Data Flash fields over I2C
+- `sourccey-battery` - minimal frontend battery telemetry JSON
+- `sourccey-battery-check` - deep diagnostics + watch mode for learning cycle checks
+- `sourccey-battery-flash` - TI FlashStream runner for `.df.fs` / `.bq.fs` files
 
 ## Prerequisites
 
@@ -72,7 +72,7 @@ uv run python -c "import smbus2; print('smbus2 OK')"
 ### 1) Confirm communication
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py info
+uv run sourccey-battery-configure info
 ```
 
 Expected: JSON with `device_type`, `fw_version`, `chem_id`, `control_status`.
@@ -80,7 +80,7 @@ Expected: JSON with `device_type`, `fw_version`, `chem_id`, `control_status`.
 ### 2) Apply standard Sourccey setup
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py setup-4s-lifepo4
+uv run sourccey-battery-configure setup-4s-lifepo4
 ```
 
 This applies the project defaults (4S LiFePO4 profile, divider/config fields, thresholds, IT enable flow).
@@ -88,19 +88,19 @@ This applies the project defaults (4S LiFePO4 profile, divider/config fields, th
 ### 3) Verify key written fields
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py read-field --field voltage_divider
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py read-field --field flash_update_ok_cell_volt_mv
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py read-field --field number_of_series_cells
+uv run sourccey-battery-configure read-field --field voltage_divider
+uv run sourccey-battery-configure read-field --field flash_update_ok_cell_volt_mv
+uv run sourccey-battery-configure read-field --field number_of_series_cells
 ```
 
 ### 3b) Show all stats (pretty JSON, useful for debugging)
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/check_bq34z100.py --pretty
+uv run sourccey-battery-check --pretty
 ```
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/check_bq34z100.py --full --pretty
+uv run sourccey-battery-check --full --pretty
 ```
 
 Use this output as your primary debugging snapshot when values look wrong.
@@ -108,7 +108,7 @@ Use this output as your primary debugging snapshot when values look wrong.
 ### 4) Verify runtime telemetry
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/battery.py
+uv run sourccey-battery
 ```
 
 Expected: JSON with `voltage`, `current_a`, `remaining_capacity_ah`, `max_capacity_ah`, `state_of_charge`, `max_error`.
@@ -116,13 +116,13 @@ Expected: JSON with `voltage`, `current_a`, `remaining_capacity_ah`, `max_capaci
 ### 5) Run deeper health snapshot (recommended)
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/check_bq34z100.py --pretty
+uv run sourccey-battery-check --pretty
 ```
 
 Optional watch mode:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/check_bq34z100.py --watch --interval-s 5
+uv run sourccey-battery-check --watch --interval-s 5
 ```
 
 ### 6) Flash golden image (new or recovered chips)
@@ -130,19 +130,19 @@ uv run python src/lerobot/scripts/sourccey/battery/check_bq34z100.py --watch --i
 Full firmware + data flash image:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-golden --profile bq
+uv run sourccey-battery-flash --profile bq
 ```
 
 Data-flash-only image:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-golden --profile df
+uv run sourccey-battery-flash --profile df
 ```
 
 Preview without writes:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-golden --profile bq --dry-run
+uv run sourccey-battery-flash --profile bq --dry-run
 ```
 
 ## Common commands
@@ -150,37 +150,37 @@ uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-g
 List editable built-in fields:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py list-fields
+uv run sourccey-battery-configure list-fields
 ```
 
 Read one field:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py read-field --field <field_name>
+uv run sourccey-battery-configure read-field --field <field_name>
 ```
 
 Write one field:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py write-field --field <field_name> --value <int_value>
+uv run sourccey-battery-configure write-field --field <field_name> --value <int_value>
 ```
 
 Set divider from resistor values and enable external divider mode:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py set-divider --top-ohm 249000 --bottom-ohm 16500 --enable-voltsel
+uv run sourccey-battery-configure set-divider --top-ohm 249000 --bottom-ohm 16500 --enable-voltsel
 ```
 
 Use non-default bus/address if needed:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py --bus 1 --address 0x55 info
+uv run sourccey-battery-configure --bus 1 --address 0x55 info
 ```
 
 Flash from a specific file path:
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py flash-golden --fs-file src/lerobot/scripts/sourccey/battery/golden/0100_2_01-bq34z100.bq.fs
+uv run sourccey-battery-flash --file /path/to/0100_2_01-bq34z100.bq.fs
 ```
 
 ## Troubleshooting write failures
@@ -201,9 +201,9 @@ then communication is working, but Data Flash commit was rejected by gauge state
 ### What to check first
 
 ```bash
-uv run python src/lerobot/scripts/sourccey/battery/configure_bq34z100.py info
-uv run python src/lerobot/scripts/sourccey/battery/battery.py
-uv run python src/lerobot/scripts/sourccey/battery/check_bq34z100.py --pretty
+uv run sourccey-battery-configure info
+uv run sourccey-battery
+uv run sourccey-battery-check --pretty
 ```
 
 If voltage path is wrong, writes can be blocked by flash update safety behavior.

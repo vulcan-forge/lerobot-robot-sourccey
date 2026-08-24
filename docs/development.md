@@ -73,8 +73,12 @@ the version and create a new tag rather than reusing the old one.
 
 | Extra | Purpose |
 | --- | --- |
+| `robot` | Complete robot-host installation profile |
+| `desktop` | Complete desktop teleoperation, recording, and dataset profile |
+| `all` | Robot, desktop, and development dependencies |
 | `hardware` | Linux GPIO, I2C, IMU, and battery dependencies |
 | `record` | LeRobot dataset and recording dependencies |
+| `dataset` | Packaged dataset command dependencies |
 | `dev` | Tests, builds, and Protobuf development tools |
 
 Return to the [documentation index](README.md).
