@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lerobot_robot_sourccey"
-version = "0.2.2"
+version = "0.2.3"
 description = "Sourccey robot and teleoperator integration for LeRobot"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
