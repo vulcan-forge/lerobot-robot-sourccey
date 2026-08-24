@@ -980,7 +980,7 @@ feetech = [
 
 [[package]]
 name = "lerobot-robot-sourccey"
-version = "0.2.2"
+version = "0.2.4.dev2"
 source = { editable = "." }
 dependencies = [
     { name = "lerobot", extra = ["feetech"] },

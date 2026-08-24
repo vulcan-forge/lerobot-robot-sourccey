@@ -1,10 +1,16 @@
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SETUP_SCRIPT = PROJECT_ROOT / "setup" / "setup.py"
+
+
+def test_packaged_setup_entry_point() -> None:
+    project = tomllib.loads((PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert project["project"]["scripts"]["sourccey-setup"] == "lerobot_robot_sourccey.setup:main"
 
 
 def run_setup(*args: str) -> subprocess.CompletedProcess[str]:

@@ -77,6 +77,13 @@ On the desktop/controller computer:
 python setup/setup.py desktop
 ```
 
+After the package is installed, the equivalent packaged command is available:
+
+```bash
+uv run sourccey-setup robot
+uv run sourccey-setup desktop
+```
+
 Battery writes are never performed by default. These explicit options are for
 initial provisioning or recovery:
 

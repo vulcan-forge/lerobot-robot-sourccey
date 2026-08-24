@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lerobot_robot_sourccey"
-version = "version = "0.2.4.dev1""
+version = "0.2.4.dev2"
 description = "Sourccey robot and teleoperator integration for LeRobot"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -65,6 +65,7 @@ all = [
 ]
 
 [project.scripts]
+sourccey-setup = "lerobot_robot_sourccey.setup:main"
 sourccey-host = "lerobot_robot_sourccey.robots.sourccey.sourccey_host:main"
 sourccey-battery = "lerobot_robot_sourccey.battery.battery:main"
 sourccey-battery-check = "lerobot_robot_sourccey.battery.check_bq34z100:main"
@@ -96,6 +97,7 @@ lerobot_robot_sourccey = [
     "**/*.fs",
     "**/*.srec",
     "**/*.sh",
+    "**/*.rules",
 ]
 
 [tool.pytest.ini_options]

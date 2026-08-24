@@ -11,6 +11,12 @@ import lerobot_robot_sourccey
 
 metadata = distribution("lerobot_robot_sourccey").metadata
 assert metadata["Name"].startswith("lerobot_robot_")
+scripts = {
+    entry.name: entry.value
+    for entry in distribution("lerobot_robot_sourccey").entry_points
+    if entry.group == "console_scripts"
+}
+assert scripts["sourccey-setup"] == "lerobot_robot_sourccey.setup:main"
 
 assert RobotConfig.get_choice_class("sourccey") is lerobot_robot_sourccey.SourcceyConfig
 assert RobotConfig.get_choice_class("sourccey_client") is lerobot_robot_sourccey.SourcceyClientConfig
