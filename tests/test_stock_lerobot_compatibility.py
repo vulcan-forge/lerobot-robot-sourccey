@@ -58,18 +58,18 @@ def test_base_kinematics_match_installed_wasd_directions() -> None:
 
     forward = robot._body_to_wheel_normalized(x=1.0, y=0.0, theta=0.0)
     assert forward == {
-        "front_left": -1.0,
-        "front_right": 1.0,
-        "rear_left": -1.0,
-        "rear_right": 1.0,
+        "front_left": 1.0,
+        "front_right": -1.0,
+        "rear_left": 1.0,
+        "rear_right": -1.0,
     }
 
     left = robot._body_to_wheel_normalized(x=0.0, y=1.0, theta=0.0)
     assert left == {
-        "front_left": 1.0,
-        "front_right": 1.0,
-        "rear_left": -1.0,
-        "rear_right": -1.0,
+        "front_left": -1.0,
+        "front_right": -1.0,
+        "rear_left": 1.0,
+        "rear_right": 1.0,
     }
 
     assert robot._wheel_normalized_to_body(forward)["x.vel"] == pytest.approx(1.0)

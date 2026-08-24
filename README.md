@@ -8,15 +8,17 @@ Sourccey source files or patches inside the LeRobot repository.
 
 | Guide | Use it for |
 | --- | --- |
-| [Documentation index](docs/README.md) | Browse all package documentation |
-| [Setup](docs/setup.md) | Install the plugin and verify LeRobot discovery |
-| [Controlling Sourccey](docs/control.md) | Start the host, calibrate, teleoperate, and troubleshoot |
-| [Recording datasets](docs/recording.md) | Record demonstrations for training |
-| [Hardware utilities](docs/hardware.md) | Battery, GPIO, I2C, IMU, and device information |
-| [Development and distribution](docs/development.md) | Test, build, install, or publish the package |
+| [Documentation index](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/README.md) | Browse all package documentation |
+| [Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/setup.md) | Install the plugin and verify LeRobot discovery |
+| [Controlling Sourccey](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/control.md) | Start the host, calibrate, teleoperate, and troubleshoot |
+| [Recording datasets](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/recording.md) | Record demonstrations for training |
+| [Hardware utilities](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/hardware.md) | Battery, GPIO, I2C, IMU, and device information |
+| [Development and distribution](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/development.md) | Test, build, install, or publish the package |
 
-For the normal operating path, complete [Setup](docs/setup.md), then follow
-[Controlling Sourccey](docs/control.md).
+For the normal operating path, complete
+[Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/setup.md),
+then follow
+[Controlling Sourccey](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/control.md).
 
 ## Registered LeRobot types
 

@@ -32,6 +32,19 @@ uv run lerobot-teleoperate \
 ```
 
 ```
+uv run lerobot-teleoperate \
+  --robot.type=sourccey_client \
+  --robot.id=sourccey \
+  --robot.remote_ip=192.168.1.242 \
+  --teleop.type=sourccey_teleoperator \
+  --teleop.id=sourccey_leader \
+  --teleop.left_arm_port=COM98 \
+  --teleop.right_arm_port=COM99 \
+  --fps=30 \
+  --display_data=true
+```
+
+```
 uv run lerobot-record \
  --robot.type=sourccey_client \
  --robot.id="sourccey" \
