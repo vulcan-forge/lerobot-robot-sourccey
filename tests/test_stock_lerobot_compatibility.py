@@ -53,6 +53,29 @@ def test_composite_teleoperator_maps_keyboard_actions(tmp_path: Path) -> None:
     assert action["z.vel"] == pytest.approx(1.0)
 
 
+def test_base_kinematics_match_installed_wasd_directions() -> None:
+    robot = object.__new__(Sourccey)
+
+    forward = robot._body_to_wheel_normalized(x=1.0, y=0.0, theta=0.0)
+    assert forward == {
+        "front_left": -1.0,
+        "front_right": 1.0,
+        "rear_left": -1.0,
+        "rear_right": 1.0,
+    }
+
+    left = robot._body_to_wheel_normalized(x=0.0, y=1.0, theta=0.0)
+    assert left == {
+        "front_left": 1.0,
+        "front_right": 1.0,
+        "rear_left": -1.0,
+        "rear_right": -1.0,
+    }
+
+    assert robot._wheel_normalized_to_body(forward)["x.vel"] == pytest.approx(1.0)
+    assert robot._wheel_normalized_to_body(left)["y.vel"] == pytest.approx(1.0)
+
+
 def test_composite_teleoperator_uses_edges_for_toggles(tmp_path: Path) -> None:
     teleop = make_teleoperator(tmp_path)
     first = teleop._base_action({"n"})

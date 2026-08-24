@@ -13,10 +13,14 @@ Grab a shirt from the pile, fold it, then place the folded shirt to the side.
 ```
 
 ```
+uv run -m lerobot.robots.sourccey.sourccey.sourccey.sourccey_host
+```
+
+```
 uv run lerobot-teleoperate \
  --robot.type=sourccey_client \
  --robot.id="sourccey" \
- --robot.remote_ip="192.168.1.242" \
+ --robot.remote_ip="192.168.1.243" \
  --teleop.type=bi_sourccey_leader \
  --teleop.id="sourccey_leader" \
  --teleop.left_arm_port="/dev/ttyACM0" \
