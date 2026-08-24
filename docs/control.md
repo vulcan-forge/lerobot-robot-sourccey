@@ -32,14 +32,16 @@ uv run lerobot-teleoperate \
 ```
 
 ```
-uv run lerobot-teleoperate \
+uv run --no-sync lerobot-teleoperate \
   --robot.type=sourccey_client \
   --robot.id=sourccey \
   --robot.remote_ip=192.168.1.242 \
-  --teleop.type=sourccey_teleoperator \
+  --teleop.type=bi_sourccey_leader \
   --teleop.id=sourccey_leader \
   --teleop.left_arm_port=COM98 \
   --teleop.right_arm_port=COM99 \
+  --teleop_keyboard.type=keyboard \
+  --teleop_keyboard.id=sourccey_keyboard \
   --fps=30 \
   --display_data=true
 ```
