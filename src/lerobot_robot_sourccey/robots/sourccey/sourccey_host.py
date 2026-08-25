@@ -17,6 +17,8 @@ import logging
 import signal
 import time
 
+import numpy as np
+
 import zmq
 
 from .config_sourccey import SourcceyConfig, SourcceyHostConfig
@@ -145,19 +147,29 @@ def main():
                             for cam_key, timestamp in current_camera_timestamps.items()
                         )
                     )
+                    # Stale camera frames must not take the whole state feed down with
+                    # them. Joint positions, base velocity and z are what teleop and
+                    # calibration run on, and a camera that stops producing timestamps
+                    # (device busy, unplugged, held by another process) used to silence
+                    # ALL of it - the client sees no state at all and cannot tell a
+                    # camera fault from a disconnected robot. Keep publishing the
+                    # lightweight state every loop; only the images wait for fresh frames.
+                    send_observation = observation
                     if not has_new_camera_frame:
-                        logging.debug("Skipping observation send: no new camera frame timestamps.")
-                        elapsed = time.time() - loop_start_time
-                        time.sleep(max(1 / host.max_loop_freq_hz - elapsed, 0))
-                        duration = time.perf_counter() - start
-                        continue
+                        logging.debug("No new camera frames; sending state without images.")
+                        send_observation = {
+                            key: value
+                            for key, value in observation.items()
+                            if not isinstance(value, np.ndarray)
+                        }
 
                     # Convert observation to protobuf using existing method
-                    robot_state = robot.protobuf_converter.observation_to_protobuf(observation)
+                    robot_state = robot.protobuf_converter.observation_to_protobuf(send_observation)
 
                     # Send protobuf message instead of JSON
                     host.zmq_observation_socket.send(robot_state.SerializeToString(), flags=zmq.NOBLOCK)
-                    last_sent_camera_timestamps = current_camera_timestamps
+                    if has_new_camera_frame:
+                        last_sent_camera_timestamps = current_camera_timestamps
             except zmq.Again:
                 logging.info("Dropping observation, no client connected")
             except Exception as e:
