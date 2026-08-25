@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import time
 from typing import Any
 
 import cv2
@@ -13,8 +14,43 @@ logger = logging.getLogger(__name__)
 class SourcceyProtobuf:
     """Handles protobuf conversion for Sourccey robot actions and observations."""
 
+    # Joint position keys every observation is expected to carry.
+    _ARM_POS_KEYS = tuple(
+        f"{side}_{motor}.pos"
+        for side in ("left", "right")
+        for motor in ("shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll", "gripper")
+    )
+
     def __init__(self):
-        pass
+        self._last_missing_warn = 0.0
+
+    def _warn_if_arm_positions_missing(self, observation: dict[str, Any]) -> None:
+        """Surface a silently-empty observation.
+
+        The joint fields below fall back to 0.0 when a key is absent, so a robot that is
+        not reporting arm positions still publishes a perfectly valid state message full
+        of zeros. Downstream that is indistinguishable from "every joint is at its
+        midpoint", which silently corrupts anything calibrating against it. Say so
+        instead - throttled, since this runs at loop rate.
+        """
+        missing = [key for key in self._ARM_POS_KEYS if key not in observation]
+        if not missing:
+            return
+
+        now = time.monotonic()
+        if now - self._last_missing_warn < 5.0:
+            return
+        self._last_missing_warn = now
+
+        present = sorted(k for k in observation if isinstance(k, str) and k.endswith(".pos"))
+        logger.warning(
+            "Observation is missing %d/%d arm position keys - publishing 0.0 for them. "
+            "Missing: %s. Position keys present: %s",
+            len(missing),
+            len(self._ARM_POS_KEYS),
+            ", ".join(missing),
+            ", ".join(present) if present else "(none)",
+        )
 
     def action_to_protobuf(self, action: dict[str, Any]) -> sourccey_pb2.SourcceyRobotAction:
         """Convert action dictionary to protobuf SourcceyRobotAction message."""
@@ -78,6 +114,8 @@ class SourcceyProtobuf:
         """Convert observation dictionary to protobuf SourcceyRobotState message."""
         try:
             msg = sourccey_pb2.SourcceyRobotState()
+
+            self._warn_if_arm_positions_missing(observation)
 
             # Set left arm motor positions
             left_motor_pos = msg.left_arm_joints
