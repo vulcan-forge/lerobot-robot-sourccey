@@ -67,6 +67,7 @@ all = [
 [project.scripts]
 sourccey-setup = "lerobot_robot_sourccey.setup:main"
 sourccey-host = "lerobot_robot_sourccey.robots.sourccey.sourccey_host:main"
+sourccey-calibrate = "lerobot_robot_sourccey.robots.sourccey.calibrate:main"
 sourccey-battery = "lerobot_robot_sourccey.battery.battery:main"
 sourccey-battery-check = "lerobot_robot_sourccey.battery.check_bq34z100:main"
 sourccey-battery-configure = "lerobot_robot_sourccey.battery.configure_bq34z100:main"

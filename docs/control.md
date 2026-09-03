@@ -13,8 +13,37 @@ Grab a shirt from the pile, fold it, then place the folded shirt to the side.
 ```
 
 ```
-uv run -m lerobot.robots.sourccey.sourccey.sourccey.sourccey_host
+uv run sourccey-host
 ```
+
+## Automatic calibration
+
+Run calibration on the robot computer with `sourccey-host` stopped. Soft
+auto-calibration applies the packaged arm ranges and saves the current Z sensor
+limits without moving Z:
+
+```bash
+uv run sourccey-calibrate
+```
+
+To redetect the physical arm limits and both Z endpoints, clear people and
+obstacles from the robot's full workspace, then explicitly acknowledge the
+movement:
+
+```bash
+uv run sourccey-calibrate --full-reset --yes
+```
+
+One arm can be calibrated without connecting the other arm, the base, or Z:
+
+```bash
+uv run sourccey-calibrate --arm left
+uv run sourccey-calibrate --arm right --full-reset --yes
+```
+
+Use `--left-arm-port`, `--right-arm-port`, `--id`, or `--calibration-dir` to
+override their normal configuration values. The stock `lerobot-calibrate`
+command remains available for interactive manual calibration.
 
 ```
 uv run lerobot-teleoperate \
@@ -32,7 +61,7 @@ uv run lerobot-teleoperate \
 ```
 
 ```
-uv run --no-sync lerobot-teleoperate \
+uv run lerobot-teleoperate \
   --robot.type=sourccey_client \
   --robot.id=sourccey \
   --robot.remote_ip=192.168.1.242 \
