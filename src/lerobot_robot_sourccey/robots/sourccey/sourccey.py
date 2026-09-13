@@ -106,7 +106,6 @@ class Sourccey(Robot):
         # command when the first ADC read was temporarily unavailable.
         self._last_known_z_pos = 0.0
         self._z_command_target = 0.0
-        self._last_z_velocity_command_t = time.monotonic()
 
     def __del__(self):
         # Destructors can run on partially initialized objects if __init__ raised.
@@ -195,7 +194,7 @@ class Sourccey(Robot):
         if not self.is_connected:
             return
 
-        logger.info(f"Disconnecting Sourccey")
+        logger.info("Disconnecting Sourccey")
         self.left_arm.disconnect()
         self.right_arm.disconnect()
 
@@ -213,7 +212,7 @@ class Sourccey(Robot):
                 pass
         self._connected_cameras.clear()
 
-        logger.info(f"Sourccey disconnected.")
+        logger.info("Sourccey disconnected.")
 
     ###################################################################
     # Calibration and Configuration Management
@@ -341,7 +340,6 @@ class Sourccey(Robot):
                 except Exception as exc:
                     logger.warning("Failed to read z actuator position; reusing last good value: %s", exc)
             obs_dict["z.pos"] = float(self._last_known_z_pos)
-            obs_dict["z.vel"] = 0.0
 
             for cam_key in self.cameras.keys():
                 try:
@@ -397,30 +395,13 @@ class Sourccey(Robot):
                 base_goal_vel.get("theta.vel", 0.0)
             )
 
-            # Z accepts either an absolute position or a normalized velocity.
+            # Z is controlled exclusively with an absolute position target.
             if "z.pos" in base_goal_pos and self.z_actuator.use_z_actuator:
                 try:
                     self._z_command_target = float(np.clip(base_goal_pos["z.pos"], -100.0, 100.0))
                     self.z_actuator.move_to_position(self._z_command_target, instant=True)
                 except Exception as e:
                     logger.warning(f"Failed to command z actuator: {e}")
-            elif "z.vel" in base_goal_vel and self.z_actuator.use_z_actuator:
-                try:
-                    now = time.monotonic()
-                    dt = max(0.0, min(now - self._last_z_velocity_command_t, 0.1))
-                    self._last_z_velocity_command_t = now
-                    z_velocity = float(np.clip(base_goal_vel["z.vel"], -1.0, 1.0))
-                    self._z_command_target = float(
-                        np.clip(
-                            self._z_command_target + z_velocity * self.config.z_velocity_units_per_s * dt,
-                            -100.0,
-                            100.0,
-                        )
-                    )
-                    self.z_actuator.move_to_position(self._z_command_target, instant=True)
-                except Exception as e:
-                    logger.warning(f"Failed to apply Z velocity command: {e}")
-
             dc_motors_action = {**wheel_action }
             self.dc_motors_controller.set_velocities(dc_motors_action)
 

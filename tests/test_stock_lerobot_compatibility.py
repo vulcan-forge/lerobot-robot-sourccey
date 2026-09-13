@@ -42,19 +42,30 @@ def test_robot_and_client_construct_with_stock_lerobot(tmp_path: Path, monkeypat
     assert "right_shoulder_pan.pos" in robot.action_features
     assert "z.pos" in robot.action_features
     assert "z.pos" in client.action_features
-    assert "z.vel" not in robot.action_features
-    assert "z.vel" not in client.action_features
-    assert "z.vel" not in robot.observation_features
-    assert "z.vel" not in client.observation_features
 
 
 def test_composite_teleoperator_maps_keyboard_actions(tmp_path: Path) -> None:
     teleop = make_teleoperator(tmp_path)
+    teleop._z_position = 0.0
+    teleop._last_z_command_t -= 0.1
     action = teleop._base_action({"w", "a", "z", "q"})
     assert action["x.vel"] == pytest.approx(0.9)
     assert action["y.vel"] == pytest.approx(0.9)
     assert action["theta.vel"] == pytest.approx(0.9)
-    assert action["z.vel"] == pytest.approx(1.0)
+    assert action["z.pos"] == pytest.approx(2.5, abs=0.1)
+
+
+def test_composite_teleoperator_does_not_read_disconnected_keyboard(tmp_path: Path) -> None:
+    class DisconnectedKeyboard:
+        is_connected = False
+
+        def get_action(self):
+            raise AssertionError("get_action must not be called while disconnected")
+
+    teleop = make_teleoperator(tmp_path)
+    teleop.keyboard = DisconnectedKeyboard()
+
+    assert teleop._pressed_keys() == set()
 
 
 @pytest.mark.parametrize("keys", [set(), {"q"}, {"e"}, {"w", "n"}])
@@ -77,7 +88,6 @@ def test_client_keyboard_action_matches_recording_schema(tmp_path: Path, keys) -
     frame = build_dataset_frame(features, action, prefix="action")
 
     assert frame["action"].shape == (len(names),)
-    assert "z.vel" not in action
     message = client.protobuf_converter.action_to_protobuf(action)
     assert message.HasField("base_target_position")
     assert message.base_target_position.z_pos == pytest.approx(action["z.pos"])
@@ -118,12 +128,11 @@ def test_composite_teleoperator_uses_edges_for_toggles(tmp_path: Path) -> None:
     assert second["untorque_left"] is False
 
 
-def test_z_velocity_survives_protobuf_round_trip() -> None:
+def test_z_position_survives_protobuf_round_trip() -> None:
     converter = SourcceyProtobuf()
-    message = converter.action_to_protobuf({"z.vel": -0.75})
+    message = converter.action_to_protobuf({"z.pos": -75.0})
     action = converter.protobuf_to_action(message)
-    assert action["z.vel"] == pytest.approx(-0.75)
-    assert "z.pos" not in action
+    assert action["z.pos"] == pytest.approx(-75.0)
 
 
 def test_sensor_and_battery_types_are_package_owned() -> None:

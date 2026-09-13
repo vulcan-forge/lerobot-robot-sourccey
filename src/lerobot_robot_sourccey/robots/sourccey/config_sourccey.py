@@ -99,7 +99,6 @@ class SourcceyConfig(RobotConfig):
     z_maximum_command: float = 1.0
     z_position_deadband: float = 0.75
     z_control_hz: float = 50.0
-    z_velocity_units_per_s: float = 25.0
 
     # Optional
     left_arm_disable_torque_on_disconnect: bool = True

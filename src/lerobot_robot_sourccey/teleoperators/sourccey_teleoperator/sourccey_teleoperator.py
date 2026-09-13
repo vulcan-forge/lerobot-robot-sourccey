@@ -1,5 +1,6 @@
 from functools import cached_property
 import logging
+import time
 from typing import Any
 
 from lerobot.teleoperators.keyboard import KeyboardTeleop, KeyboardTeleopConfig
@@ -38,6 +39,8 @@ class SourcceyTeleoperator(Teleoperator):
         self._previous_keys: set[str] = set()
         self._untorque_left = False
         self._untorque_right = False
+        self._z_position = float(config.initial_z_position)
+        self._last_z_command_t = time.monotonic()
 
     @cached_property
     def action_features(self) -> dict[str, type]:
@@ -46,7 +49,7 @@ class SourcceyTeleoperator(Teleoperator):
             "x.vel": float,
             "y.vel": float,
             "theta.vel": float,
-            "z.vel": float,
+            "z.pos": float,
             "untorque_left": bool,
             "untorque_right": bool,
         }
@@ -108,7 +111,7 @@ class SourcceyTeleoperator(Teleoperator):
         self.leader.send_feedback(feedback)
 
     def _pressed_keys(self) -> set[str]:
-        if self.keyboard is None:
+        if self.keyboard is None or not self.keyboard.is_connected:
             return set()
         raw = self.keyboard.get_action()
         return {str(key) for key in raw}
@@ -135,14 +138,24 @@ class SourcceyTeleoperator(Teleoperator):
         theta_vel = speed * (
             float(keys["rotate_left"] in pressed) - float(keys["rotate_right"] in pressed)
         )
-        z_vel = self.config.z_velocity * (
+        now = time.monotonic()
+        dt = max(0.0, min(now - self._last_z_command_t, 0.1))
+        self._last_z_command_t = now
+        z_direction = (
             float(keys["up"] in pressed) - float(keys["down"] in pressed)
+        )
+        self._z_position = max(
+            self.config.z_position_min,
+            min(
+                self._z_position + z_direction * self.config.z_position_units_per_s * dt,
+                self.config.z_position_max,
+            ),
         )
         return {
             "x.vel": x_vel,
             "y.vel": y_vel,
             "theta.vel": theta_vel,
-            "z.vel": z_vel,
+            "z.pos": self._z_position,
             "untorque_left": self._untorque_left,
             "untorque_right": self._untorque_right,
         }

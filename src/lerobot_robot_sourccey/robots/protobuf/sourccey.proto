@@ -23,7 +23,7 @@ message BaseVelocity {
     float x_vel = 1;
     float y_vel = 2;
     float theta_vel = 3;
-    float z_vel = 4;          // Linear actuator velocity command
+    reserved 4;
 }
 
 // Base position information (linear actuator)

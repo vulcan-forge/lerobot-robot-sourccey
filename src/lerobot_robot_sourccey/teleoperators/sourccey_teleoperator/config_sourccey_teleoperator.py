@@ -28,7 +28,10 @@ class SourcceyTeleoperatorConfig(TeleoperatorConfig):
     teleop_keys: dict[str, str] = field(default_factory=default_teleop_keys)
     speed_levels: tuple[float, ...] = (0.8, 0.9, 1.0)
     initial_speed_index: int = 1
-    z_velocity: float = 1.0
+    z_position_min: float = -100.0
+    z_position_max: float = 100.0
+    initial_z_position: float = 100.0
+    z_position_units_per_s: float = 25.0
     enable_keyboard: bool = True
 
     def __post_init__(self) -> None:
@@ -36,5 +39,9 @@ class SourcceyTeleoperatorConfig(TeleoperatorConfig):
             raise ValueError("speed_levels must contain at least one value")
         if not 0 <= self.initial_speed_index < len(self.speed_levels):
             raise ValueError("initial_speed_index must index speed_levels")
-        if self.z_velocity <= 0:
-            raise ValueError("z_velocity must be positive")
+        if self.z_position_min >= self.z_position_max:
+            raise ValueError("z_position_min must be less than z_position_max")
+        if not self.z_position_min <= self.initial_z_position <= self.z_position_max:
+            raise ValueError("initial_z_position must be within the configured Z position range")
+        if self.z_position_units_per_s <= 0:
+            raise ValueError("z_position_units_per_s must be positive")
