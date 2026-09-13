@@ -104,22 +104,22 @@ python setup/setup.py robot --dry-run
 The package does not need to be published. From the LeRobot repository on the
 controller computer, install it from its local path:
 
-```powershell
-cd C:\Users\Nicholas\Desktop\Projects\Vulcan\lerobot-vulcan
+```bash
+cd /c/Users/Nicholas/Desktop/Projects/Vulcan/lerobot-vulcan
 uv sync --locked
-uv pip install -e "..\packages\lerobot-robot-sourccey[record,dev]"
+uv pip install -e "../packages/lerobot-robot-sourccey[record,dev]"
 ```
 
 Verify that LeRobot discovers the plugin:
 
-```powershell
+```bash
 uv run --no-sync lerobot-teleoperate --robot.type=sourccey_client --teleop.type=sourccey_teleoperator --help
 ```
 
 Use `--no-sync` only for the local editable-install workflow: it prevents
 `uv run` from reconciling the environment solely against the LeRobot lockfile.
-For a normal `uv add` installation, use `uv run` without `--no-sync`. On
-Windows, you can also invoke `.venv\Scripts\lerobot-teleoperate.exe` directly.
+For a normal `uv add` installation, use `uv run` without `--no-sync`. From Git
+Bash, you can also invoke `.venv/Scripts/lerobot-teleoperate.exe` directly.
 
 Next, follow [Controlling Sourccey](control.md).
 
