@@ -207,3 +207,5 @@ uv run lerobot-edit-dataset \
 If you switched to filtered output, replace with:
 - `--repo_id "$FILTERED_REPO"`
 - `--root "$FILTERED_ROOT"`
+
+Return to the [AI index](README.md).
