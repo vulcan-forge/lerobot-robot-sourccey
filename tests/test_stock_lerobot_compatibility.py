@@ -40,8 +40,12 @@ def test_robot_and_client_construct_with_stock_lerobot(tmp_path: Path, monkeypat
     )
     assert "left_shoulder_pan.pos" in robot.action_features
     assert "right_shoulder_pan.pos" in robot.action_features
-    assert "z.vel" in robot.action_features
-    assert "z.vel" in client.action_features
+    assert "z.pos" in robot.action_features
+    assert "z.pos" in client.action_features
+    assert "z.vel" not in robot.action_features
+    assert "z.vel" not in client.action_features
+    assert "z.vel" not in robot.observation_features
+    assert "z.vel" not in client.observation_features
 
 
 def test_composite_teleoperator_maps_keyboard_actions(tmp_path: Path) -> None:
@@ -51,6 +55,32 @@ def test_composite_teleoperator_maps_keyboard_actions(tmp_path: Path) -> None:
     assert action["y.vel"] == pytest.approx(0.9)
     assert action["theta.vel"] == pytest.approx(0.9)
     assert action["z.vel"] == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("keys", [set(), {"q"}, {"e"}, {"w", "n"}])
+def test_client_keyboard_action_matches_recording_schema(tmp_path: Path, keys) -> None:
+    from lerobot.utils.feature_utils import build_dataset_frame
+
+    client = SourcceyClient(
+        SourcceyClientConfig(remote_ip="127.0.0.1", calibration_dir=tmp_path, cameras={})
+    )
+    arm_action = {
+        name: 0.0 for name in client.action_features
+        if name.startswith(("left_", "right_"))
+    }
+    action = {**arm_action, **client._from_keyboard_to_base_action(keys, 12.0)}
+    names = list(client.action_features)
+    features = {"action": {"dtype": "float32", "shape": (len(names),), "names": names}}
+
+    # The unchanged recorder builds the frame from the teleoperator action,
+    # not the completed dictionary returned by send_action.
+    frame = build_dataset_frame(features, action, prefix="action")
+
+    assert frame["action"].shape == (len(names),)
+    assert "z.vel" not in action
+    message = client.protobuf_converter.action_to_protobuf(action)
+    assert message.HasField("base_target_position")
+    assert message.base_target_position.z_pos == pytest.approx(action["z.pos"])
 
 
 def test_base_kinematics_match_installed_wasd_directions() -> None:

@@ -128,7 +128,6 @@ class Sourccey(Robot):
                 "x.vel": float,
                 "y.vel": float,
                 "theta.vel": float,
-                "z.vel": float,
             }
 
     @property

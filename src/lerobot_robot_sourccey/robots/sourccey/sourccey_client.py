@@ -158,7 +158,6 @@ class SourcceyClient(Robot):
                 "x.vel",
                 "y.vel",
                 "theta.vel",
-                "z.vel",
             ),
             float,
         )
