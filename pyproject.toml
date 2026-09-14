@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lerobot_robot_sourccey"
-version = "0.2.4.dev8"
+version = "0.2.4.dev9"
 description = "Sourccey robot and teleoperator integration for LeRobot"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -25,7 +25,7 @@ dependencies = [
     "lerobot[feetech]>=0.6,<0.7",
     "numpy>=1.24",
     "opencv-python-headless>=4.9",
-    "protobuf>=6.31,<7",
+    "protobuf>=6.31.1,<6.32.0",
     "pynput>=1.7.7",
     "pyzmq>=26,<28",
     "websockets>=15,<17",
@@ -48,7 +48,7 @@ hardware = [
 ]
 dev = [
     "build>=1.2",
-    "grpcio-tools>=1.73,<2",
+    "grpcio-tools==1.73.1",
     "pytest>=8",
 ]
 # User-facing installation profiles. Keep the lower-level extras above for

@@ -15,4 +15,3 @@ try:
 except ImportError as e:
     print(f"Warning: Could not import protobuf modules: {e}")
     print("Make sure to run compile.py first to generate the protobuf files.")
-
