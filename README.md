@@ -45,6 +45,13 @@ The complete combine, audit, repair, and cleanup workflow is documented in
 | Teleoperator | `bi_sourccey_leader` |
 | Teleoperator | `sourccey_teleoperator` |
 
+The kiosk manual-drive bridge is available as `sourccey-manual-drive`. It
+accepts the existing kiosk arguments, for example:
+
+```bash
+sourccey-manual-drive --id=sourccey --remote_ip=127.0.0.1 --udp_port=5561 --fps=30
+```
+
 LeRobot discovers the plugin from its `lerobot_robot_sourccey` distribution
 and import-package name.
 
