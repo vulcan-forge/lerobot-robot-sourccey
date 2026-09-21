@@ -68,6 +68,7 @@ all = [
 sourccey-setup = "lerobot_robot_sourccey.setup:main"
 sourccey-host = "lerobot_robot_sourccey.robots.sourccey.sourccey_host:main"
 sourccey-calibrate = "lerobot_robot_sourccey.robots.sourccey.calibrate:main"
+sourccey-teleop-calibrate = "lerobot_robot_sourccey.teleoperators.calibrate:main"
 sourccey-manual-drive = "lerobot_robot_sourccey.robots.sourccey.manual_drive:main"
 sourccey-battery = "lerobot_robot_sourccey.battery.battery:main"
 sourccey-battery-check = "lerobot_robot_sourccey.battery.check_bq34z100:main"
