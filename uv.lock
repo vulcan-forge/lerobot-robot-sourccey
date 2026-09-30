@@ -980,7 +980,7 @@ feetech = [
 
 [[package]]
 name = "lerobot-robot-sourccey"
-version = "0.2.4.dev13"
+version = "0.2.4.dev14"
 source = { editable = "." }
 dependencies = [
     { name = "lerobot", extra = ["feetech"] },
@@ -1002,6 +1002,7 @@ all = [
     { name = "grpcio-tools" },
     { name = "lerobot", extra = ["core-scripts"] },
     { name = "lgpio", marker = "sys_platform == 'linux'" },
+    { name = "pyserial" },
     { name = "pytest" },
     { name = "smbus2", marker = "sys_platform == 'linux'" },
 ]
@@ -1022,6 +1023,7 @@ hardware = [
     { name = "adafruit-circuitpython-lsm6ds", marker = "sys_platform == 'linux'" },
     { name = "gpiozero", marker = "sys_platform == 'linux'" },
     { name = "lgpio", marker = "sys_platform == 'linux'" },
+    { name = "pyserial" },
     { name = "smbus2", marker = "sys_platform == 'linux'" },
 ]
 record = [
@@ -1033,6 +1035,7 @@ robot = [
     { name = "adafruit-circuitpython-lsm6ds", marker = "sys_platform == 'linux'" },
     { name = "gpiozero", marker = "sys_platform == 'linux'" },
     { name = "lgpio", marker = "sys_platform == 'linux'" },
+    { name = "pyserial" },
     { name = "smbus2", marker = "sys_platform == 'linux'" },
 ]
 
@@ -1055,6 +1058,7 @@ requires-dist = [
     { name = "opencv-python-headless", specifier = ">=4.9" },
     { name = "protobuf", specifier = ">=6.31.1,<6.32.0" },
     { name = "pynput", specifier = ">=1.7.7" },
+    { name = "pyserial", marker = "extra == 'hardware'", specifier = ">=3.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pyzmq", specifier = ">=26,<28" },
     { name = "smbus2", marker = "sys_platform == 'linux' and extra == 'hardware'", specifier = ">=0.4.3" },

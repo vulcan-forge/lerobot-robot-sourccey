@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lerobot_robot_sourccey"
-version = "0.2.4.dev13"
+version = "0.2.4.dev14"
 description = "Sourccey robot and teleoperator integration for LeRobot"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -39,6 +39,7 @@ dataset = [
     "lerobot[core-scripts]>=0.6,<0.7",
 ]
 hardware = [
+    "pyserial>=3.5",
     "gpiozero>=2.0.1; sys_platform == 'linux'",
     "lgpio>=0.2.2; sys_platform == 'linux'",
     "smbus2>=0.4.3; sys_platform == 'linux'",
@@ -74,6 +75,8 @@ sourccey-battery = "lerobot_robot_sourccey.battery.battery:main"
 sourccey-battery-check = "lerobot_robot_sourccey.battery.check_bq34z100:main"
 sourccey-battery-configure = "lerobot_robot_sourccey.battery.configure_bq34z100:main"
 sourccey-battery-flash = "lerobot_robot_sourccey.battery.golden.flash_bq34z100:main"
+sourccey-lidar-check = "lerobot_robot_sourccey.sensors.lidar.check:main"
+sourccey-lidar-view = "lerobot_robot_sourccey.sensors.lidar.view:main"
 sourccey-dataset-audit-consistency = "lerobot_robot_sourccey.dataset_tools.audit_dataset_consistency:main"
 sourccey-dataset-audit-videos = "lerobot_robot_sourccey.dataset_tools.audit_video_decode_errors:main"
 sourccey-dataset-combine = "lerobot_robot_sourccey.dataset_tools.combine:main"

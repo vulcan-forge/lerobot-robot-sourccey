@@ -38,6 +38,7 @@ python examples/sdk_drive_base.py --ip 192.168.1.50 --x 0.2 --duration 1.0
 | --- | --- |
 | [Documentation index](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/README.md) | Browse all package documentation |
 | [Python SDK](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/sdk.md) | Use the customer-facing Python helpers and examples |
+| [2D LiDAR](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/lidar.md) | Check the LD19, view live scans, and use its Python reader |
 | [Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/setup/README.md) | Install software, prepare hardware, calibrate, and start the host |
 | [Control systems](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/control-systems/README.md) | Teleoperate, record, replay, and deploy policies |
 | [AI and datasets](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/ai/README.md) | Manage datasets and train policies |
