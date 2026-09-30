@@ -15,5 +15,5 @@ uv run --no-sync lerobot-replay \
 The robot configuration must match the hardware used during recording. Episode
 numbers are zero-based, so `0` selects the first episode.
 
-Next, [train a policy](../ai/train.md), or return to the
+Next, explore the [Sourccey SDK](../03-sdk/README.md), or return to the
 [control-systems index](README.md).

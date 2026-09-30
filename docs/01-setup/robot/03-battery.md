@@ -47,5 +47,5 @@ writing to the gauge.
 See the [battery implementation guide](../../../src/lerobot_robot_sourccey/battery/README.md)
 for detailed diagnostics and recovery procedures.
 
-Next, [calibrate Sourccey](calibrate.md), or return to the [setup
+Next, [calibrate Sourccey](04-calibrate.md), or return to the [setup
 index](README.md).

@@ -16,5 +16,5 @@ the controller's `--robot.remote_ip` must point to the robot computer.
 Stop the host before changing battery configuration, flashing the battery
 gauge, or running a full calibration.
 
-Next, follow [Teleoperate](../../control-systems/teleoperate.md), or return to the
+Next, follow [Teleoperate](../../02-control-systems/01-teleoperate.md), or return to the
 [setup index](README.md).

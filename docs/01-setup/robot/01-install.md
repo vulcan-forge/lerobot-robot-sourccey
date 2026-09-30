@@ -42,6 +42,6 @@ After installation, the equivalent packaged command is:
 uv run sourccey-setup robot
 ```
 
-Next, configure [Robot devices](devices.md).
+Next, verify the [robot devices](02-devices.md).
 
 Return to the [robot setup index](README.md).

@@ -32,5 +32,5 @@ Keyboard controls:
 Use `--no-sync` while testing a locally editable Sourccey package. Omit it
 after `lerobot-vulcan` is pinned to the required package release.
 
-Next, [record a dataset](record.md), or return to the
+Next, [record a dataset](02-record.md), or return to the
 [control-systems index](README.md).

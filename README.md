@@ -37,16 +37,15 @@ python examples/sdk_drive_base.py --ip 192.168.1.50 --x 0.2 --duration 1.0
 | Guide | Use it for |
 | --- | --- |
 | [Documentation index](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/README.md) | Browse all package documentation |
-| [Python SDK](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/sdk.md) | Use the customer-facing Python helpers and examples |
-| [2D LiDAR](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/lidar.md) | Check the LD19, view live scans, and use its Python reader |
-| [Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/setup/README.md) | Install software, prepare hardware, calibrate, and start the host |
-| [Control systems](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/control-systems/README.md) | Teleoperate, record, replay, and deploy policies |
-| [AI and datasets](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/ai/README.md) | Manage datasets and train policies |
+| [Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/01-setup/README.md) | Install software, prepare hardware, calibrate, and start the host |
+| [Control systems](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/02-control-systems/README.md) | Teleoperate, record, replay, and deploy policies |
+| [SDK](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/03-sdk/README.md) | Use the Python API, movement helpers, cameras, and 2D LiDAR tools |
+| [AI and datasets](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/04-ai/README.md) | Manage datasets and train policies |
 
 For the normal operating path, complete
-[Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/setup/README.md),
+[Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/01-setup/README.md),
 then follow
-[Teleoperate](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/control-systems/teleoperate.md).
+[Teleoperate](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/02-control-systems/01-teleoperate.md).
 
 ## Dataset tools
 
@@ -62,7 +61,7 @@ uv run sourccey-dataset-remove-feature --help
 ```
 
 The complete combine, audit, repair, and cleanup workflow is documented in
-[Dataset tools](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/ai/datasets.md).
+[Dataset tools](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/04-ai/01-datasets.md).
 
 ## Registered LeRobot types
 

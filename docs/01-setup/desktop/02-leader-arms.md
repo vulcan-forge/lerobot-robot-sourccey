@@ -55,6 +55,6 @@ aliases are configured.
 If an arm cannot connect, confirm the selected port, USB connection, motor
 power, and that no other process has the serial port open.
 
-Next, follow [Teleoperate](../../control-systems/teleoperate.md).
+Next, follow [Teleoperate](../../02-control-systems/01-teleoperate.md).
 
 Return to the [desktop setup index](README.md).

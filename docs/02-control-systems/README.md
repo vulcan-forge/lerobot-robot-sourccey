@@ -4,13 +4,13 @@ These guides cover manual control, data collection, action replay, and policy
 deployment. Run the commands from the `lerobot-vulcan` checkout on the
 controller computer unless a guide says otherwise.
 
-1. [Teleoperate](teleoperate.md) — manually control Sourccey without saving data.
-2. [Record](record.md) — collect teleoperated demonstrations.
-3. [Replay](replay.md) — replay a recorded episode on Sourccey.
-4. [Rollout](rollout.md) — deploy a trained policy on Sourccey.
+1. [Teleoperate](01-teleoperate.md) — manually control Sourccey without saving data.
+2. [Record](02-record.md) — collect teleoperated demonstrations.
+3. [Replay](03-replay.md) — replay a recorded episode on Sourccey.
+4. [Rollout](04-rollout.md) — deploy a trained policy on Sourccey.
 
 Dataset tooling and policy training are documented under
-[AI and datasets](../ai/README.md).
+[AI and datasets](../04-ai/README.md).
 
 Start `sourccey-host` on the robot before running teleoperate, record, replay,
 or rollout:

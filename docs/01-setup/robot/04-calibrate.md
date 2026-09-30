@@ -26,5 +26,5 @@ uv run sourccey-calibrate --arm right --full-reset --yes
 Use `--left-arm-port`, `--right-arm-port`, `--id`, or
 `--calibration-dir` to override their configured values.
 
-Next, [start the robot host](host.md), or return to the [robot setup
+Next, [start the robot host](05-host.md), or return to the [robot setup
 index](README.md).

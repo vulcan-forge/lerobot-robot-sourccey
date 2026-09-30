@@ -55,6 +55,6 @@ uv run --no-sync lerobot-teleoperate \
 Use `--no-sync` with an editable package installation so `uv run` does not
 replace it with the version pinned by `lerobot-vulcan`.
 
-Next, configure the [leader-arm ports](leader-arms.md).
+Next, configure the [leader-arm ports](02-leader-arms.md).
 
 Return to the [desktop setup index](README.md).

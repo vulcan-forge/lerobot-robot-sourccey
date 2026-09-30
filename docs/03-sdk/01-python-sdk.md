@@ -51,3 +51,6 @@ The example modules expose importable functions and runnable CLIs:
 The robot host and SDK client must use releases with the same supported wire
 protocol version. Incompatible clients fail during connection instead of
 sending commands.
+
+Next, [check and visualize the 2D LiDAR](02-lidar.md), or return to the
+[SDK index](README.md).

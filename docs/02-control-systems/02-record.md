@@ -1,6 +1,6 @@
 # Record
 
-Confirm that [teleoperation](teleoperate.md) works before collecting
+Confirm that [teleoperation](01-teleoperate.md) works before collecting
 demonstrations.
 
 ```bash
@@ -32,5 +32,5 @@ finished dataset should be uploaded.
 The split keyboard path converts Q/E input into an absolute `z.pos` target
 using the latest robot observation.
 
-Next, [replay an episode](replay.md), or return to the
+Next, [replay an episode](03-replay.md), or return to the
 [control-systems index](README.md).

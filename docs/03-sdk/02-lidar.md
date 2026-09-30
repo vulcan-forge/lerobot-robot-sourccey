@@ -74,3 +74,6 @@ the sensor's zero mark.
   problem. The LD19 default is 230400 baud.
 - Override the device for direct testing with `--device /dev/ttyUSB0`.
 
+Next, continue to [AI and datasets](../04-ai/README.md), or return to the
+[SDK index](README.md).
+

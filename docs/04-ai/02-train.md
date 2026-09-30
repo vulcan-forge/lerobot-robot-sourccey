@@ -21,5 +21,5 @@ Use `cuda` for a supported NVIDIA GPU, `mps` for Apple silicon, or `cpu`
 for a CPU-only run. Adjust batch size if training runs out of device memory.
 The trained checkpoints are written beneath `--output_dir`.
 
-Next, [deploy the trained policy](../control-systems/rollout.md), or return to
+Next, [deploy the trained policy](../02-control-systems/04-rollout.md), or return to
 the [AI index](README.md).
