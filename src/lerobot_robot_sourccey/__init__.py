@@ -3,6 +3,7 @@
 from .robots.sourccey.config_sourccey import SourcceyClientConfig, SourcceyConfig
 from .robots.sourccey.sourccey import Sourccey
 from .robots.sourccey.sourccey_client import SourcceyClient
+from .sdk import SourcceySDK
 from .robots.sourccey_follower.config_sourccey_follower import SourcceyFollowerConfig
 from .robots.sourccey_follower.sourccey_follower import SourcceyFollower
 from .teleoperators.bi_sourccey_leader.bi_sourccey_leader import BiSourcceyLeader
@@ -22,6 +23,7 @@ __all__ = [
     "SourcceyFollowerConfig",
     "SourcceyLeader",
     "SourcceyLeaderConfig",
+    "SourcceySDK",
     "SourcceyTeleoperator",
     "SourcceyTeleoperatorConfig",
 ]

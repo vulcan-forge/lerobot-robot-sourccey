@@ -1,4 +1,3 @@
-import contextlib
 import logging
 from typing import Any
 
@@ -9,6 +8,39 @@ from .generated import sourccey_pb2
 
 logger = logging.getLogger(__name__)
 
+PROTOCOL_VERSION = 1
+
+_LEFT_ARM_FIELDS = {
+    "left_shoulder_pan.pos": "shoulder_pan",
+    "left_shoulder_lift.pos": "shoulder_lift",
+    "left_elbow_flex.pos": "elbow_flex",
+    "left_wrist_flex.pos": "wrist_flex",
+    "left_wrist_roll.pos": "wrist_roll",
+    "left_gripper.pos": "gripper",
+}
+_RIGHT_ARM_FIELDS = {
+    "right_shoulder_pan.pos": "shoulder_pan",
+    "right_shoulder_lift.pos": "shoulder_lift",
+    "right_elbow_flex.pos": "elbow_flex",
+    "right_wrist_flex.pos": "wrist_flex",
+    "right_wrist_roll.pos": "wrist_roll",
+    "right_gripper.pos": "gripper",
+}
+_BASE_VELOCITY_FIELDS = {
+    "x.vel": "x_vel",
+    "y.vel": "y_vel",
+    "theta.vel": "theta_vel",
+}
+_BASE_POSITION_FIELDS = {"z.pos": "z_pos"}
+_CONTROL_FIELDS = ("untorque_left", "untorque_right")
+_ACTION_FIELDS = {
+    **_LEFT_ARM_FIELDS,
+    **_RIGHT_ARM_FIELDS,
+    **_BASE_VELOCITY_FIELDS,
+    **_BASE_POSITION_FIELDS,
+}
+_ACTION_FIELDS.update({key: key for key in _CONTROL_FIELDS})
+
 
 class SourcceyProtobuf:
     """Handles protobuf conversion for Sourccey robot actions and observations."""
@@ -17,39 +49,42 @@ class SourcceyProtobuf:
         pass
 
     def action_to_protobuf(self, action: dict[str, Any]) -> sourccey_pb2.SourcceyRobotAction:
-        """Convert action dictionary to protobuf SourcceyRobotAction message."""
+        """Convert an action patch without inventing values for omitted fields."""
         try:
+            unsupported = set(action).difference(_ACTION_FIELDS, {"action"})
+            if unsupported:
+                raise ValueError(f"Unsupported Sourccey action fields: {sorted(unsupported)}")
+
             robot_action = sourccey_pb2.SourcceyRobotAction()
+            robot_action.protocol_version = PROTOCOL_VERSION
+
+            update_fields = [key for key in _ACTION_FIELDS if key in action]
+            robot_action.update_fields.extend(update_fields)
 
             # Process left arm action
-            left_target_positions = sourccey_pb2.MotorJoint()
-            left_target_positions.shoulder_pan = float(action.get("left_shoulder_pan.pos", 0.0))
-            left_target_positions.shoulder_lift = float(action.get("left_shoulder_lift.pos", 0.0))
-            left_target_positions.elbow_flex = float(action.get("left_elbow_flex.pos", 0.0))
-            left_target_positions.wrist_flex = float(action.get("left_wrist_flex.pos", 0.0))
-            left_target_positions.wrist_roll = float(action.get("left_wrist_roll.pos", 0.0))
-            left_target_positions.gripper = float(action.get("left_gripper.pos", 0.0))
-            robot_action.left_arm_target_joints.CopyFrom(left_target_positions)
+            left_fields = [key for key in _LEFT_ARM_FIELDS if key in action]
+            if left_fields:
+                left_target_positions = sourccey_pb2.MotorJoint()
+                for key in left_fields:
+                    setattr(left_target_positions, _LEFT_ARM_FIELDS[key], float(action[key]))
+                robot_action.left_arm_target_joints.CopyFrom(left_target_positions)
 
             # Process right arm action
-            right_target_positions = sourccey_pb2.MotorJoint()
-            right_target_positions.shoulder_pan = float(action.get("right_shoulder_pan.pos", 0.0))
-            right_target_positions.shoulder_lift = float(action.get("right_shoulder_lift.pos", 0.0))
-            right_target_positions.elbow_flex = float(action.get("right_elbow_flex.pos", 0.0))
-            right_target_positions.wrist_flex = float(action.get("right_wrist_flex.pos", 0.0))
-            right_target_positions.wrist_roll = float(action.get("right_wrist_roll.pos", 0.0))
-            right_target_positions.gripper = float(action.get("right_gripper.pos", 0.0))
-            robot_action.right_arm_target_joints.CopyFrom(right_target_positions)
+            right_fields = [key for key in _RIGHT_ARM_FIELDS if key in action]
+            if right_fields:
+                right_target_positions = sourccey_pb2.MotorJoint()
+                for key in right_fields:
+                    setattr(right_target_positions, _RIGHT_ARM_FIELDS[key], float(action[key]))
+                robot_action.right_arm_target_joints.CopyFrom(right_target_positions)
 
             # Process base action
-            base_action = sourccey_pb2.BaseVelocity()
-            base_action.x_vel = float(action.get("x.vel", 0.0))
-            base_action.y_vel = float(action.get("y.vel", 0.0))
-            base_action.theta_vel = float(action.get("theta.vel", 0.0))
-            robot_action.base_target_velocity.CopyFrom(base_action)
+            velocity_fields = [key for key in _BASE_VELOCITY_FIELDS if key in action]
+            if velocity_fields:
+                base_action = sourccey_pb2.BaseVelocity()
+                for key in velocity_fields:
+                    setattr(base_action, _BASE_VELOCITY_FIELDS[key], float(action[key]))
+                robot_action.base_target_velocity.CopyFrom(base_action)
 
-            # Preserve field presence: an omitted z.pos means "keep the current
-            # Z target" and must not become a numeric endpoint command.
             if "z.pos" in action:
                 base_pos = sourccey_pb2.BasePosition()
                 base_pos.z_pos = float(action["z.pos"])
@@ -57,11 +92,9 @@ class SourcceyProtobuf:
 
             # Per-arm flags
             if "untorque_left" in action:
-                with contextlib.suppress(AttributeError):
-                    robot_action.untorque_left = bool(action.get("untorque_left", False))
+                robot_action.untorque_left = bool(action["untorque_left"])
             if "untorque_right" in action:
-                with contextlib.suppress(AttributeError):
-                    robot_action.untorque_right = bool(action.get("untorque_right", False))
+                robot_action.untorque_right = bool(action["untorque_right"])
 
             return robot_action
 
@@ -77,6 +110,7 @@ class SourcceyProtobuf:
         """Convert observation dictionary to protobuf SourcceyRobotState message."""
         try:
             msg = sourccey_pb2.SourcceyRobotState()
+            msg.protocol_version = PROTOCOL_VERSION
 
             # Set left arm motor positions
             left_motor_pos = msg.left_arm_joints
@@ -127,47 +161,53 @@ class SourcceyProtobuf:
             raise
 
     def protobuf_to_action(self, action_msg: sourccey_pb2.SourcceyRobotAction) -> dict[str, Any]:
-        """Convert protobuf action to internal format."""
+        """Convert a versioned protobuf action patch to its supplied fields."""
         try:
-            action = {}
+            if action_msg.protocol_version != PROTOCOL_VERSION:
+                raise ValueError(
+                    "Unsupported Sourccey command protocol version "
+                    f"{action_msg.protocol_version}; expected {PROTOCOL_VERSION}."
+                )
+
+            update_fields = list(action_msg.update_fields)
+            unsupported = set(update_fields).difference(_ACTION_FIELDS)
+            if unsupported:
+                raise ValueError(f"Unsupported Sourccey action fields: {sorted(unsupported)}")
+            if len(update_fields) != len(set(update_fields)):
+                raise ValueError("Sourccey action update_fields contains duplicates")
+
+            action: dict[str, Any] = {}
 
             # Convert left arm action
-            left_motor_pos = action_msg.left_arm_target_joints
-            action.update({
-                "left_shoulder_pan.pos": left_motor_pos.shoulder_pan,
-                "left_shoulder_lift.pos": left_motor_pos.shoulder_lift,
-                "left_elbow_flex.pos": left_motor_pos.elbow_flex,
-                "left_wrist_flex.pos": left_motor_pos.wrist_flex,
-                "left_wrist_roll.pos": left_motor_pos.wrist_roll,
-                "left_gripper.pos": left_motor_pos.gripper,
-            })
+            left_fields = [key for key in update_fields if key in _LEFT_ARM_FIELDS]
+            if left_fields and not action_msg.HasField("left_arm_target_joints"):
+                raise ValueError("Sourccey action is missing its left-arm payload")
+            for key in left_fields:
+                action[key] = getattr(action_msg.left_arm_target_joints, _LEFT_ARM_FIELDS[key])
 
             # Convert right arm action
-            right_motor_pos = action_msg.right_arm_target_joints
-            action.update({
-                "right_shoulder_pan.pos": right_motor_pos.shoulder_pan,
-                "right_shoulder_lift.pos": right_motor_pos.shoulder_lift,
-                "right_elbow_flex.pos": right_motor_pos.elbow_flex,
-                "right_wrist_flex.pos": right_motor_pos.wrist_flex,
-                "right_wrist_roll.pos": right_motor_pos.wrist_roll,
-                "right_gripper.pos": right_motor_pos.gripper,
-            })
+            right_fields = [key for key in update_fields if key in _RIGHT_ARM_FIELDS]
+            if right_fields and not action_msg.HasField("right_arm_target_joints"):
+                raise ValueError("Sourccey action is missing its right-arm payload")
+            for key in right_fields:
+                action[key] = getattr(action_msg.right_arm_target_joints, _RIGHT_ARM_FIELDS[key])
 
             # Convert base action
-            base_vel = action_msg.base_target_velocity
-            action.update({
-                "x.vel": base_vel.x_vel,
-                "y.vel": base_vel.y_vel,
-                "theta.vel": base_vel.theta_vel,
-            })
+            velocity_fields = [key for key in update_fields if key in _BASE_VELOCITY_FIELDS]
+            if velocity_fields and not action_msg.HasField("base_target_velocity"):
+                raise ValueError("Sourccey action is missing its base-velocity payload")
+            for key in velocity_fields:
+                action[key] = getattr(action_msg.base_target_velocity, _BASE_VELOCITY_FIELDS[key])
 
-            # Absence is meaningful: the host leaves its existing Z target alone.
-            if action_msg.HasField("base_target_position"):
+            if "z.pos" in update_fields:
+                if not action_msg.HasField("base_target_position"):
+                    raise ValueError("Sourccey action is missing its base-position payload")
                 action["z.pos"] = action_msg.base_target_position.z_pos
 
-            # Per-arm flags from protobuf
-            action["untorque_left"] = bool(getattr(action_msg, "untorque_left", False))
-            action["untorque_right"] = bool(getattr(action_msg, "untorque_right", False))
+            if "untorque_left" in update_fields:
+                action["untorque_left"] = bool(action_msg.untorque_left)
+            if "untorque_right" in update_fields:
+                action["untorque_right"] = bool(action_msg.untorque_right)
 
             return action
 

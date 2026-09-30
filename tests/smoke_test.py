@@ -8,6 +8,8 @@ from lerobot.teleoperators.config import TeleoperatorConfig
 
 import lerobot_robot_sourccey
 
+assert lerobot_robot_sourccey.SourcceySDK.__module__ == "lerobot_robot_sourccey.sdk"
+
 
 metadata = distribution("lerobot_robot_sourccey").metadata
 assert metadata["Name"].startswith("lerobot_robot_")

@@ -36,7 +36,7 @@ from .modules.slam import (
 
 # Import protobuf modules
 from ..protobuf.generated import sourccey_pb2
-from ..protobuf.sourccey_protobuf import SourcceyProtobuf
+from ..protobuf.sourccey_protobuf import PROTOCOL_VERSION, SourcceyProtobuf
 
 class SourcceyClient(Robot):
     config_class = SourcceyClientConfig
@@ -71,6 +71,7 @@ class SourcceyClient(Robot):
         self.zmq_cmd_socket = None
         self.zmq_observation_socket = None
         self.zmq_slam_input_socket = None
+        self._pending_observation_bytes: bytes | None = None
 
         self.last_frames = {}
         self.last_remote_state = {}
@@ -245,6 +246,17 @@ class SourcceyClient(Robot):
             if self.zmq_observation_socket not in socks or socks[self.zmq_observation_socket] != zmq.POLLIN:
                 raise DeviceNotConnectedError("Timeout waiting for Sourccey Host to connect expired.")
 
+            initial_observation = self.zmq_observation_socket.recv(zmq.NOBLOCK)
+            robot_state = sourccey_pb2.SourcceyRobotState()
+            robot_state.ParseFromString(initial_observation)
+            if robot_state.protocol_version != PROTOCOL_VERSION:
+                raise DeviceNotConnectedError(
+                    "Incompatible Sourccey Host protocol version "
+                    f"{robot_state.protocol_version}; this client requires {PROTOCOL_VERSION}. "
+                    "Install the same lerobot-robot-sourccey release on the host and client."
+                )
+            self._pending_observation_bytes = initial_observation
+
             self._is_connected = True
         except Exception:
             if self.zmq_slam_input_socket is not None:
@@ -259,6 +271,7 @@ class SourcceyClient(Robot):
             if self.zmq_context is not None:
                 self.zmq_context.term()
                 self.zmq_context = None
+            self._pending_observation_bytes = None
             raise
 
     def calibrate(self) -> None:
@@ -271,33 +284,14 @@ class SourcceyClient(Robot):
         """
         Best-effort final command before disconnect.
 
-        Stops base motion while resending existing arm targets. Z is omitted so the
-        host keeps its current target. If a complete arm state is unavailable, send
-        nothing and let the host watchdog stop the base.
+        Presence-safe action patches let this stop the base without sending any arm
+        or lift target. Those omitted controls remain unchanged on the host.
         """
         stop_action: dict[str, Any] = {
             "x.vel": 0.0,
             "y.vel": 0.0,
             "theta.vel": 0.0,
         }
-        arm_keys = tuple(
-            key for key in self._state_order if key.startswith(("left_", "right_")) and key.endswith(".pos")
-        )
-        for key in arm_keys:
-            if key in self._last_sent_action:
-                stop_action[key] = self._last_sent_action[key]
-            elif key in self.last_remote_state:
-                stop_action[key] = self.last_remote_state[key]
-            else:
-                logging.debug("Skipping final base stop: no safe hold target for %s.", key)
-                return False
-
-        stop_action["untorque_left"] = bool(
-            self._last_sent_action.get("untorque_left", self.untorque_left_active)
-        )
-        stop_action["untorque_right"] = bool(
-            self._last_sent_action.get("untorque_right", self.untorque_right_active)
-        )
         robot_action = self.protobuf_converter.action_to_protobuf(stop_action)
         self.zmq_cmd_socket.send(robot_action.SerializeToString(), flags=zmq.NOBLOCK)
         return True
@@ -321,6 +315,7 @@ class SourcceyClient(Robot):
         self.zmq_observation_socket.close()
         self.zmq_cmd_socket.close()
         self.zmq_context.term()
+        self._pending_observation_bytes = None
         self._is_connected = False
 
     ###################################################################
@@ -350,45 +345,43 @@ class SourcceyClient(Robot):
         return obs_dict
 
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
-        """Command sourccey to move to a target joint configuration. Translates to motor space + sends over ZMQ
+        """Send a presence-safe action patch to the remote Sourccey host.
 
         Args:
-            action (np.ndarray): array containing the goal positions for the motors.
+            action: Controls to update. Omitted controls remain unchanged.
 
         Raises:
             RobotDeviceNotConnectedError: if robot is not connected.
 
         Returns:
-            np.ndarray: the action sent to the motors, potentially clipped.
+            The controls sent, potentially converted to NumPy scalar values for
+            compatibility with LeRobot recording code. A complete LeRobot action
+            also includes its packed ``action`` array.
         """
         if not self._is_connected:
             raise DeviceNotConnectedError(
                 "ManipulatorRobot is not connected. You need to run `robot.connect()`."
             )
 
-        # Fill keyboard-owned / optional controls when teleop provides arm-only
-        # actions (e.g. bi_sourccey_leader in lerobot-record). Mutate in-place so
-        # upstream callers that reuse the dict (dataset logging) see complete keys.
-        if "z.pos" not in action:
-            z_hold = self.last_remote_state.get("z.pos", self._z_pos_cmd)
-            action["z.pos"] = float(z_hold)
-        if "x.vel" not in action:
-            action["x.vel"] = 0.0
-        if "y.vel" not in action:
-            action["y.vel"] = 0.0
-        if "theta.vel" not in action:
-            action["theta.vel"] = 0.0
-
-        # Convert action to protobuf and send
+        # Encode only supplied controls. Omitted fields are intentionally left
+        # unchanged by the host, including arm joints, base axes, and the lift.
         robot_action = self.protobuf_converter.action_to_protobuf(action)
         self.zmq_cmd_socket.send(robot_action.SerializeToString())
-        self._last_sent_action = dict(action)
+        self._last_sent_action.update(action)
 
         # TODO(Steven): Remove the np conversion when it is possible to record a non-numpy array value
-        actions = np.array([action.get(k, 0.0) for k in self._state_order], dtype=np.float32)
-
-        action_sent = {key: actions[i] for i, key in enumerate(self._state_order)}
-        action_sent["action"] = actions
+        action_sent = {
+            key: np.float32(action[key])
+            for key in self._state_order
+            if key in action
+        }
+        for key in ("untorque_left", "untorque_right"):
+            if key in action:
+                action_sent[key] = bool(action[key])
+        if all(key in action for key in self._state_order):
+            action_sent["action"] = np.array(
+                [action[key] for key in self._state_order], dtype=np.float32
+            )
         return action_sent
 
     ###################################################################
@@ -451,6 +444,15 @@ class SourcceyClient(Robot):
     ###################################################################
     def _poll_and_get_latest_message(self) -> Optional[bytes]:
         """Polls the ZMQ socket for a limited time and returns the latest message bytes."""
+        if self._pending_observation_bytes is not None:
+            last_msg = self._pending_observation_bytes
+            self._pending_observation_bytes = None
+            while True:
+                try:
+                    last_msg = self.zmq_observation_socket.recv(zmq.NOBLOCK)
+                except zmq.Again:
+                    return last_msg
+
         poller = zmq.Poller()
         poller.register(self.zmq_observation_socket, zmq.POLLIN)
 

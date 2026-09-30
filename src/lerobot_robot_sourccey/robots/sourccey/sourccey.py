@@ -106,6 +106,7 @@ class Sourccey(Robot):
         # command when the first ADC read was temporarily unavailable.
         self._last_known_z_pos = 0.0
         self._z_command_target = 0.0
+        self._last_base_goal_vel = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
 
     def __del__(self):
         # Destructors can run on partially initialized objects if __init__ raised.
@@ -388,12 +389,16 @@ class Sourccey(Robot):
             prefixed_send_action_left = {f"left_{key}": value for key, value in sent_left.items()}
             prefixed_send_action_right = {f"right_{key}": value for key, value in sent_right.items()}
 
-            # Base velocity
-            wheel_action = self._body_to_wheel_normalized(
-                base_goal_vel.get("x.vel", 0.0),
-                base_goal_vel.get("y.vel", 0.0),
-                base_goal_vel.get("theta.vel", 0.0)
-            )
+            # Apply base velocity as a patch. Missing axes retain their previous
+            # targets, and an arm-only command does not touch the mobile base.
+            wheel_action = None
+            if base_goal_vel:
+                self._last_base_goal_vel.update(base_goal_vel)
+                wheel_action = self._body_to_wheel_normalized(
+                    self._last_base_goal_vel["x.vel"],
+                    self._last_base_goal_vel["y.vel"],
+                    self._last_base_goal_vel["theta.vel"],
+                )
 
             # Z is controlled exclusively with an absolute position target.
             if "z.pos" in base_goal_pos and self.z_actuator.use_z_actuator:
@@ -402,8 +407,8 @@ class Sourccey(Robot):
                     self.z_actuator.move_to_position(self._z_command_target, instant=True)
                 except Exception as e:
                     logger.warning(f"Failed to command z actuator: {e}")
-            dc_motors_action = {**wheel_action }
-            self.dc_motors_controller.set_velocities(dc_motors_action)
+            if wheel_action is not None:
+                self.dc_motors_controller.set_velocities(wheel_action)
 
             sent_action = {**prefixed_send_action_left, **prefixed_send_action_right, **base_goal_pos, **base_goal_vel}
             return sent_action
@@ -422,15 +427,23 @@ class Sourccey(Robot):
         Returns:
             dict: modified action with positions stripped if untorqued
         """
-        left_flag = bool(action.get("untorque_left", False))
-        right_flag = bool(action.get("untorque_right", False))
+        left_flag = (
+            bool(action["untorque_left"])
+            if "untorque_left" in action
+            else self.untorque_left_prev
+        )
+        right_flag = (
+            bool(action["untorque_right"])
+            if "untorque_right" in action
+            else self.untorque_right_prev
+        )
 
         # Left arm handling
         if left_flag:
             if not self.untorque_left_prev:
                 self.left_arm.bus.disable_torque()
             action = {k: v for k, v in action.items() if not k.startswith("left_")}
-        elif self.untorque_left_prev and not left_flag:
+        elif "untorque_left" in action and self.untorque_left_prev:
             self.left_arm.bus.enable_torque()
 
         # Right arm handling
@@ -438,7 +451,7 @@ class Sourccey(Robot):
             if not self.untorque_right_prev:
                 self.right_arm.bus.disable_torque()
             action = {k: v for k, v in action.items() if not k.startswith("right_")}
-        elif self.untorque_right_prev and not right_flag:
+        elif "untorque_right" in action and self.untorque_right_prev:
             self.right_arm.bus.enable_torque()
 
         # Update state
@@ -454,6 +467,7 @@ class Sourccey(Robot):
     # Base Functions
     def stop_base(self):
         self.dc_motors_controller.set_velocities({"front_left": 0, "front_right": 0, "rear_left": 0, "rear_right": 0})
+        self._last_base_goal_vel = {"x.vel": 0.0, "y.vel": 0.0, "theta.vel": 0.0}
 
     def disable_arm_torque(self) -> None:
         """

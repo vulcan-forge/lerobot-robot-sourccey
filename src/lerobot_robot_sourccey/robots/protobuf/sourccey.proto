@@ -43,9 +43,18 @@ message SourcceyRobotState {
 
     // Camera State - simplified to just name and bytes
     repeated CameraImage cameras = 5;
+
+    // Wire protocol spoken by the host that produced this observation.
+    uint32 protocol_version = 6;
 }
 
-// Complete sourccey robot action
+// Presence-safe Sourccey robot action patch.
+//
+// Only keys named in update_fields are applied by the host. This preserves the
+// distinction between an omitted control (leave unchanged) and an explicit
+// zero/false value. The nested messages retain their original field numbers for
+// wire compatibility, but protocol_version intentionally makes legacy peers
+// fail closed rather than interpreting absent fields as zero-valued commands.
 message SourcceyRobotAction {
     // Motor Joint Action
     MotorJoint left_arm_target_joints = 1;
@@ -58,4 +67,11 @@ message SourcceyRobotAction {
     // Host control actions (per-arm)
     bool untorque_left = 5;
     bool untorque_right = 6;
+
+    // Canonical action keys to apply, for example "left_shoulder_pan.pos" or
+    // "x.vel". Explicit zero and false values remain meaningful.
+    repeated string update_fields = 7;
+
+    // Must match the host's supported protocol version.
+    uint32 protocol_version = 8;
 }

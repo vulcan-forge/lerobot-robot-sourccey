@@ -19,8 +19,8 @@ Stable Linux aliases may also be configured as:
 In Git Bash on Windows, use the Windows serial names directly:
 
 ```bash
-LEFT_ARM_PORT=COM5
-RIGHT_ARM_PORT=COM6
+LEFT_ARM_PORT=COM14
+RIGHT_ARM_PORT=COM13
 ```
 
 Pass them to control commands with:

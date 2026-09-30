@@ -4,11 +4,40 @@
 robot and its leader-arm teleoperator. It works with LeRobot without requiring
 Sourccey source files or patches inside the LeRobot repository.
 
+## Python SDK quickstart
+
+The customer-facing helpers live in `lerobot_robot_sourccey.sdk` and are also
+available directly from the package:
+
+```python
+from lerobot_robot_sourccey import SourcceySDK
+
+with SourcceySDK.from_ip("192.168.1.50") as robot:
+    observation = robot.get_observation()
+    front_left = robot.get_camera("front_left", observation=observation)
+    print(front_left.shape)
+
+    robot.drive_for(x=0.2, duration_s=1.0)
+```
+
+Base velocities are normalized values from `-1.0` to `1.0`. Timed movement
+refreshes the host watchdog and sends an explicit stop when it finishes or is
+interrupted.
+
+Runnable and importable examples:
+
+```bash
+python examples/sdk_read_observation.py --ip 192.168.1.50
+python examples/sdk_camera.py --ip 192.168.1.50 --camera front_left --output front-left.jpg
+python examples/sdk_drive_base.py --ip 192.168.1.50 --x 0.2 --duration 1.0
+```
+
 ## Documentation
 
 | Guide | Use it for |
 | --- | --- |
 | [Documentation index](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/README.md) | Browse all package documentation |
+| [Python SDK](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/sdk.md) | Use the customer-facing Python helpers and examples |
 | [Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/setup/README.md) | Install software, prepare hardware, calibrate, and start the host |
 | [Control systems](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/control-systems/README.md) | Teleoperate, record, replay, and deploy policies |
 | [AI and datasets](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/ai/README.md) | Manage datasets and train policies |

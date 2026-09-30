@@ -47,31 +47,37 @@ class BasePosition(_message.Message):
     def __init__(self, z_pos: _Optional[float] = ...) -> None: ...
 
 class SourcceyRobotState(_message.Message):
-    __slots__ = ("left_arm_joints", "right_arm_joints", "base_position", "base_velocity", "cameras")
+    __slots__ = ("left_arm_joints", "right_arm_joints", "base_position", "base_velocity", "cameras", "protocol_version")
     LEFT_ARM_JOINTS_FIELD_NUMBER: _ClassVar[int]
     RIGHT_ARM_JOINTS_FIELD_NUMBER: _ClassVar[int]
     BASE_POSITION_FIELD_NUMBER: _ClassVar[int]
     BASE_VELOCITY_FIELD_NUMBER: _ClassVar[int]
     CAMERAS_FIELD_NUMBER: _ClassVar[int]
+    PROTOCOL_VERSION_FIELD_NUMBER: _ClassVar[int]
     left_arm_joints: MotorJoint
     right_arm_joints: MotorJoint
     base_position: BasePosition
     base_velocity: BaseVelocity
     cameras: _containers.RepeatedCompositeFieldContainer[CameraImage]
-    def __init__(self, left_arm_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., right_arm_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., base_position: _Optional[_Union[BasePosition, _Mapping]] = ..., base_velocity: _Optional[_Union[BaseVelocity, _Mapping]] = ..., cameras: _Optional[_Iterable[_Union[CameraImage, _Mapping]]] = ...) -> None: ...
+    protocol_version: int
+    def __init__(self, left_arm_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., right_arm_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., base_position: _Optional[_Union[BasePosition, _Mapping]] = ..., base_velocity: _Optional[_Union[BaseVelocity, _Mapping]] = ..., cameras: _Optional[_Iterable[_Union[CameraImage, _Mapping]]] = ..., protocol_version: _Optional[int] = ...) -> None: ...
 
 class SourcceyRobotAction(_message.Message):
-    __slots__ = ("left_arm_target_joints", "right_arm_target_joints", "base_target_position", "base_target_velocity", "untorque_left", "untorque_right")
+    __slots__ = ("left_arm_target_joints", "right_arm_target_joints", "base_target_position", "base_target_velocity", "untorque_left", "untorque_right", "update_fields", "protocol_version")
     LEFT_ARM_TARGET_JOINTS_FIELD_NUMBER: _ClassVar[int]
     RIGHT_ARM_TARGET_JOINTS_FIELD_NUMBER: _ClassVar[int]
     BASE_TARGET_POSITION_FIELD_NUMBER: _ClassVar[int]
     BASE_TARGET_VELOCITY_FIELD_NUMBER: _ClassVar[int]
     UNTORQUE_LEFT_FIELD_NUMBER: _ClassVar[int]
     UNTORQUE_RIGHT_FIELD_NUMBER: _ClassVar[int]
+    UPDATE_FIELDS_FIELD_NUMBER: _ClassVar[int]
+    PROTOCOL_VERSION_FIELD_NUMBER: _ClassVar[int]
     left_arm_target_joints: MotorJoint
     right_arm_target_joints: MotorJoint
     base_target_position: BasePosition
     base_target_velocity: BaseVelocity
     untorque_left: bool
     untorque_right: bool
-    def __init__(self, left_arm_target_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., right_arm_target_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., base_target_position: _Optional[_Union[BasePosition, _Mapping]] = ..., base_target_velocity: _Optional[_Union[BaseVelocity, _Mapping]] = ..., untorque_left: bool = ..., untorque_right: bool = ...) -> None: ...
+    update_fields: _containers.RepeatedScalarFieldContainer[str]
+    protocol_version: int
+    def __init__(self, left_arm_target_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., right_arm_target_joints: _Optional[_Union[MotorJoint, _Mapping]] = ..., base_target_position: _Optional[_Union[BasePosition, _Mapping]] = ..., base_target_velocity: _Optional[_Union[BaseVelocity, _Mapping]] = ..., untorque_left: bool = ..., untorque_right: bool = ..., update_fields: _Optional[_Iterable[str]] = ..., protocol_version: _Optional[int] = ...) -> None: ...
