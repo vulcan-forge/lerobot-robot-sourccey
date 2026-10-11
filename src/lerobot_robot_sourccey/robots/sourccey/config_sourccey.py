@@ -80,6 +80,9 @@ def sourccey_dc_motors_config() -> dict:
 @RobotConfig.register_subclass("sourccey")
 @dataclass
 class SourcceyConfig(RobotConfig):
+    # Keep base, lift, and cameras usable with either or both arms absent.
+    allow_partial_connection: bool = True
+
     left_arm_port: str = "/dev/robotLeftArm"
     right_arm_port: str = "/dev/robotRightArm"
 

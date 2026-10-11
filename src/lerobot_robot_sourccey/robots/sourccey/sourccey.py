@@ -14,11 +14,13 @@
 # limitations under the License.
 
 import logging
-from functools import cached_property
-from typing import Any
-import numpy as np
 import threading
 import time
+from collections.abc import Callable
+from functools import cached_property
+from typing import Any, TypeVar, overload
+
+import numpy as np
 
 from lerobot.cameras.utils import make_cameras_from_configs
 from lerobot_robot_sourccey.motors.dc_pwm.dc_pwm import PWMDCMotorsController
@@ -31,6 +33,29 @@ from lerobot_robot_sourccey.robots.sourccey_z_actuator.sourccey_z_actuator impor
 from .config_sourccey import SourcceyConfig
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
+
+
+@overload
+def _try_hardware(operation: str, callback: Callable[[], T], fallback: T) -> T: ...
+
+
+@overload
+def _try_hardware(operation: str, callback: Callable[[], T]) -> T | None: ...
+
+
+def _try_hardware(operation: str, callback: Callable[[], T], fallback: T | None = None) -> T | None:
+    """Log an isolated hardware failure and return the caller's fallback.
+
+    Use only for best-effort operations. Startup and calibration retain their
+    own exception policies so unexpected failures still propagate.
+    """
+    try:
+        return callback()
+    except Exception as exc:
+        logger.warning("%s failed: %s", operation, exc)
+        return fallback
+
 
 class Sourccey(Robot):
     """
@@ -74,13 +99,14 @@ class Sourccey(Robot):
         self.cameras = make_cameras_from_configs(config.cameras)
         # Cameras are treated as best-effort: startup should not fail if a camera fails to connect/read.
         self._connected_cameras: set[str] = set()
+        self._connected = False
 
         self.dc_motors_controller = PWMDCMotorsController(
             motors=self.config.dc_motors,
             config=self.config.dc_motors_config,
         )
 
-         # Z Actuator Code
+        # Base and lift share the same motor controller.
         self.z_sensor = ZSensor(adc_channel=1, vref=3.30, average_samples=max(1, config.z_adc_samples))
         self.z_actuator = SourcceyZActuator(
             sensor=self.z_sensor,
@@ -150,30 +176,59 @@ class Sourccey(Robot):
 
     @property
     def is_connected(self) -> bool:
-        left_arm_connected = self.left_arm is not None and self.left_arm.is_connected
-        right_arm_connected = self.right_arm is not None and self.right_arm.is_connected
-        arms_connected = left_arm_connected and right_arm_connected
+        return self._connected
 
-        # Only require cameras that successfully connected (failed cameras are ignored).
-        cams_connected = all(self.cameras[k].is_connected for k in self._connected_cameras)
-        return arms_connected and cams_connected
+    @property
+    def available_arms(self) -> dict[str, bool]:
+        """Live availability of each follower arm, independent of robot startup."""
+        return {
+            name: arm.is_connected
+            for name, arm in self._followers()
+        }
+
+    def _followers(self) -> tuple[tuple[str, SourcceyFollower], ...]:
+        return (("left", self.left_arm), ("right", self.right_arm))
+
+    def _available_followers(self) -> list[tuple[str, SourcceyFollower]]:
+        return [
+            (name, arm)
+            for name, arm in self._followers()
+            if arm.is_connected
+        ]
 
     ###################################################################
     # Connection Management
     ###################################################################
     def connect(self, calibrate: bool = True) -> None:
-        self.left_arm.connect(calibrate)
-        self.right_arm.connect(calibrate)
+        if self._connected:
+            return
+        self._connect_arms(calibrate)
+        self._connect_base_and_lift()
+        self._connect_cameras()
+        self._connected = True
 
+    def _connect_arms(self, calibrate: bool) -> None:
+        for name, arm in self._followers():
+            try:
+                arm.connect(calibrate)
+            except (ConnectionError, OSError) as exc:
+                # A failed handshake can leave the serial port open.
+                if arm.bus.is_connected:
+                    _try_hardware(f"Clean up {name} arm", arm.bus.disconnect)
+                if not self.config.allow_partial_connection:
+                    self.disconnect()
+                    raise
+                logger.warning("%s arm unavailable: %s. Continuing without it.", name, exc)
+
+    def _connect_base_and_lift(self) -> None:
         self._z_hardware_available = True
         try:
             self.dc_motors_controller.connect()
             self.z_actuator.connect()
-            try:
-                self._last_known_z_pos = float(self.z_actuator.read_position())
-                self._z_command_target = self._last_known_z_pos
-            except Exception as exc:
-                logger.warning("Could not initialize Z position from the sensor: %s", exc)
+            self._last_known_z_pos = _try_hardware(
+                "Initialize Z position", self._read_z_sensor, self._last_known_z_pos
+            )
+            self._z_command_target = self._last_known_z_pos
         except RuntimeError as exc:
             self._z_hardware_available = False
             self.z_actuator.use_z_actuator = False
@@ -182,35 +237,34 @@ class Sourccey(Robot):
                 exc,
             )
 
-        # Connect only target cameras
+    def _connect_cameras(self) -> None:
         self._connected_cameras.clear()
         for cam_key in self.cameras.keys():
-            try:
+            def connect_camera() -> bool:
                 self.cameras[cam_key].connect()
-                self._connected_cameras.add(cam_key)
-            except Exception as e:
-                logger.warning(f"Camera '{cam_key}' failed to connect: {e}. Continuing without it.")
+                return True
 
-    def disconnect(self):
-        if not self.is_connected:
-            return
+            if _try_hardware(f"Connect camera '{cam_key}'", connect_camera, False):
+                self._connected_cameras.add(cam_key)
+
+    def disconnect(self) -> None:
+        self._connected = False
 
         logger.info("Disconnecting Sourccey")
-        self.left_arm.disconnect()
-        self.right_arm.disconnect()
+        for name, arm in self._available_followers():
+            _try_hardware(f"Disconnect {name} arm", arm.disconnect)
 
-        self.stop_base()
-        self.dc_motors_controller.disconnect()
-
-        self.z_actuator.stop()
-        self.z_actuator.disconnect()
+        for operation, cleanup in (
+            ("Stop base", self.stop_base),
+            ("Stop lift", self.z_actuator.stop),
+            ("Disconnect lift", self.z_actuator.disconnect),
+            ("Disconnect base controller", self.dc_motors_controller.disconnect),
+        ):
+            _try_hardware(operation, cleanup)
 
         # Disconnect only those we connected
         for cam_key in list(self._connected_cameras):
-            try:
-                self.cameras[cam_key].disconnect()
-            except Exception:
-                pass
+            _try_hardware(f"Disconnect camera '{cam_key}'", self.cameras[cam_key].disconnect)
         self._connected_cameras.clear()
 
         logger.info("Sourccey disconnected.")
@@ -220,18 +274,18 @@ class Sourccey(Robot):
     ###################################################################
     @property
     def is_calibrated(self) -> bool:
-        return self.left_arm.is_calibrated and self.right_arm.is_calibrated
+        return all(arm.is_calibrated for _, arm in self._available_followers())
 
     def calibrate(self) -> None:
-        self.left_arm.calibrate()
-        self.right_arm.calibrate()
+        for _, arm in self._available_followers():
+            arm.calibrate()
 
     def auto_calibrate(self, full_reset: bool = False, arm: str | None = None) -> None:
         """
         Auto-calibrate robot joints.
 
-        If arm is None, calibrate Z first, then start left arm immediately and
-        right arm 3 seconds later.
+        If arm is None, calibrate Z first, then available arms with a 3-second
+        delay between starts.
         arm can be "left" or "right" to calibrate only that side.
         """
         if arm is None:
@@ -264,28 +318,19 @@ class Sourccey(Robot):
                     logger.exception("Auto-calibration failed for %s arm", arm_name)
                     calibration_errors.append((arm_name, exc))
 
-            # Create threads for each arm
-            left_thread = threading.Thread(
-                target=run_arm_calibration,
-                args=("left", self.left_arm),
-                kwargs={"reverse": False, "full_reset": full_reset},
-            )
-            right_thread = threading.Thread(
-                target=run_arm_calibration,
-                args=("right", self.right_arm),
-                kwargs={"reverse": True, "full_reset": full_reset},
-            )
-
-            # Start left arm immediately
-            left_thread.start()
-
-            # Wait 3 seconds before starting right arm
-            time.sleep(3)
-            right_thread.start()
-
-            # Wait for both threads to complete
-            left_thread.join()
-            right_thread.join()
+            threads = []
+            for name, follower in self._available_followers():
+                if threads:
+                    time.sleep(3)
+                thread = threading.Thread(
+                    target=run_arm_calibration,
+                    args=(name, follower),
+                    kwargs={"reverse": name == "right", "full_reset": full_reset},
+                )
+                thread.start()
+                threads.append(thread)
+            for thread in threads:
+                thread.join()
 
             if calibration_errors:
                 error_messages = ", ".join(f"{arm_name}: {exc}" for arm_name, exc in calibration_errors)
@@ -295,8 +340,12 @@ class Sourccey(Robot):
                 raise RuntimeError(message) from calibration_errors[0][1]
 
         elif arm == "left":
+            if not self.left_arm.is_connected:
+                raise ConnectionError("Left arm is unavailable")
             self.left_arm.auto_calibrate(reverse=False, full_reset=full_reset)
         elif arm == "right":
+            if not self.right_arm.is_connected:
+                raise ConnectionError("Right arm is unavailable")
             self.right_arm.auto_calibrate(reverse=True, full_reset=full_reset)
         else:
             raise ValueError("arm must be one of: None, 'left', 'right'")
@@ -305,159 +354,123 @@ class Sourccey(Robot):
         return True
 
     def configure(self) -> None:
-        self.left_arm.configure()
-        self.right_arm.configure()
+        for _, arm in self._available_followers():
+            arm.configure()
 
     def setup_motors(self) -> None:
-        self.left_arm.setup_motors()
-        self.right_arm.setup_motors()
+        for _, arm in self._available_followers():
+            arm.setup_motors()
 
     ###################################################################
     # Data Management
     ###################################################################
 
     def get_observation(self) -> dict[str, Any]:
-        try:
-            start = time.perf_counter()
+        return _try_hardware("Get observation", self._read_observation, {})
 
-            obs_dict = {}
+    def _read_observation(self) -> dict[str, Any]:
+        start = time.perf_counter()
+        observation = {}
+        for name, arm in self._followers():
+            observation.update(self._read_arm(name, arm))
 
-            left_obs = self.left_arm.get_observation()
-            obs_dict.update({f"left_{key}": value for key, value in left_obs.items()})
+        wheel_velocities = self.dc_motors_controller.get_velocities()
+        observation.update(self._wheel_normalized_to_body(wheel_velocities))
+        observation["z.pos"] = self._read_z_position()
+        for name in self.cameras:
+            observation[name] = self._read_camera(name)
 
-            right_obs = self.right_arm.get_observation()
-            obs_dict.update({f"right_{key}": value for key, value in right_obs.items()})
+        logger.debug("%s get_observation took: %.1fms", self, (time.perf_counter() - start) * 1e3)
+        return observation
 
-            base_wheel_vel = self.dc_motors_controller.get_velocities()
-            base_vel = self._wheel_normalized_to_body(base_wheel_vel)
-            obs_dict.update(base_vel)
+    def _read_arm(self, name: str, arm: SourcceyFollower) -> dict[str, Any]:
+        positions = {f"{motor}.pos": float("nan") for motor in arm.bus.motors}
+        if arm.is_connected:
+            positions.update(_try_hardware(f"Read {name} arm", arm.get_observation, {}))
+        return {f"{name}_{key}": value for key, value in positions.items()}
 
-            # Z actuator position (best-effort; keep schema stable).
-            # Reuse the last good reading on transient ADC/SPI failures instead of
-            # snapping back to +100, which can look like live recalibration drift.
-            if self.z_actuator is not None and self.z_actuator.is_connected and self.z_actuator.use_z_actuator:
-                try:
-                    self._last_known_z_pos = float(self.z_actuator.read_position())
-                except Exception as exc:
-                    logger.warning("Failed to read z actuator position; reusing last good value: %s", exc)
-            obs_dict["z.pos"] = float(self._last_known_z_pos)
+    def _read_z_sensor(self) -> float:
+        return float(self.z_actuator.read_position())
 
-            for cam_key in self.cameras.keys():
-                try:
-                    start = time.perf_counter()
-                    obs_dict[cam_key] = self.cameras[cam_key].read_latest()
-                    dt_ms = (time.perf_counter() - start) * 1e3
-                    logger.debug(f"{self} read {cam_key}: {dt_ms:.1f}ms")
-                except Exception as e:
-                    # Keep the observation schema stable even if a camera is down.
-                    h = int(self.config.cameras[cam_key].height)
-                    w = int(self.config.cameras[cam_key].width)
-                    obs_dict[cam_key] = np.zeros((h, w, 3), dtype=np.uint8)
-                    logger.warning(f"Camera '{cam_key}' read failed: {e}. Using black frame.")
+    def _read_z_position(self) -> float:
+        # Keep the last good reading on transient ADC/SPI failures.
+        if self.z_actuator is not None and self.z_actuator.is_connected and self.z_actuator.use_z_actuator:
+            self._last_known_z_pos = _try_hardware(
+                "Read Z position; retaining last good value", self._read_z_sensor, self._last_known_z_pos
+            )
+        return float(self._last_known_z_pos)
 
-            dt_ms = (time.perf_counter() - start) * 1e3
-            logger.debug(f"{self} get_observation took: {dt_ms:.1f}ms")
-
-            return obs_dict
-        except Exception as e:
-            print(f"Error getting observation: {e}")
-            return {}
+    def _read_camera(self, name: str) -> np.ndarray:
+        frame = _try_hardware(f"Read camera '{name}'", self.cameras[name].read_latest)
+        if frame is not None:
+            return frame
+        config = self.config.cameras[name]
+        return np.zeros((int(config.height), int(config.width), 3), dtype=np.uint8)
 
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
-        try:
-            # Apply per-arm untorque flags automatically
-            action = self.apply_untorque_flags(action)
+        return _try_hardware("Send action", lambda: self._send_action(action), {})
 
-            left_action = {key.removeprefix("left_"): value for key, value in action.items() if key.startswith("left_")}
-            right_action = {key.removeprefix("right_"): value for key, value in action.items() if key.startswith("right_")}
-            base_goal_vel = {k: v for k, v in action.items() if k.endswith(".vel")}
-            base_goal_pos = {k: v for k, v in action.items() if k.endswith(".pos")}
+    def _send_action(self, action: dict[str, Any]) -> dict[str, Any]:
+        action = self.apply_untorque_flags(action)
+        sent = {}
+        for name, arm in self._available_followers():
+            sent.update(self._send_arm_action(name, arm, action))
 
-            prefixed_send_action_left = {}
-            prefixed_send_action_right = {}
+        base_velocity = {key: value for key, value in action.items() if key.endswith(".vel")}
+        # Preserve command ordering: lift target precedes wheel output.
+        wheel_action = self._prepare_base_action(base_velocity)
+        if "z.pos" in action and self.z_actuator.use_z_actuator:
+            _try_hardware("Command lift", lambda: self._send_z_target(action["z.pos"]))
+        if wheel_action is not None:
+            self.dc_motors_controller.set_velocities(wheel_action)
 
-            # Only send to followers if there are keys for that arm
-            if left_action:
-                sent_left = self.left_arm.send_action(left_action)
-            else:
-                sent_left = {}
-            if right_action:
-                sent_right = self.right_arm.send_action(right_action)
-            else:
-                sent_right = {}
+        if "z.pos" in action:
+            sent["z.pos"] = action["z.pos"]
+        sent.update(base_velocity)
+        return sent
 
-            prefixed_send_action_left = {f"left_{key}": value for key, value in sent_left.items()}
-            prefixed_send_action_right = {f"right_{key}": value for key, value in sent_right.items()}
-
-            # Apply base velocity as a patch. Missing axes retain their previous
-            # targets, and an arm-only command does not touch the mobile base.
-            wheel_action = None
-            if base_goal_vel:
-                self._last_base_goal_vel.update(base_goal_vel)
-                wheel_action = self._body_to_wheel_normalized(
-                    self._last_base_goal_vel["x.vel"],
-                    self._last_base_goal_vel["y.vel"],
-                    self._last_base_goal_vel["theta.vel"],
-                )
-
-            # Z is controlled exclusively with an absolute position target.
-            if "z.pos" in base_goal_pos and self.z_actuator.use_z_actuator:
-                try:
-                    self._z_command_target = float(np.clip(base_goal_pos["z.pos"], -100.0, 100.0))
-                    self.z_actuator.move_to_position(self._z_command_target, instant=True)
-                except Exception as e:
-                    logger.warning(f"Failed to command z actuator: {e}")
-            if wheel_action is not None:
-                self.dc_motors_controller.set_velocities(wheel_action)
-
-            sent_action = {**prefixed_send_action_left, **prefixed_send_action_right, **base_goal_pos, **base_goal_vel}
-            return sent_action
-        except Exception as e:
-            print(f"Error sending action: {e}")
+    def _send_arm_action(self, name: str, arm: SourcceyFollower, action: dict[str, Any]) -> dict[str, Any]:
+        prefix = f"{name}_"
+        targets = {key.removeprefix(prefix): value for key, value in action.items() if key.startswith(prefix)}
+        if not targets:
             return {}
+        sent = _try_hardware(f"Command {name} arm", lambda: arm.send_action(targets), {})
+        return {f"{prefix}{key}": value for key, value in sent.items()}
+
+    def _prepare_base_action(self, velocity: dict[str, float]) -> dict[str, float] | None:
+        # Missing axes retain their targets; arm-only commands leave the base alone.
+        if not velocity:
+            return None
+        self._last_base_goal_vel.update(velocity)
+        return self._body_to_wheel_normalized(
+            self._last_base_goal_vel["x.vel"],
+            self._last_base_goal_vel["y.vel"],
+            self._last_base_goal_vel["theta.vel"],
+        )
+
+    def _send_z_target(self, target: float) -> None:
+        self._z_command_target = float(np.clip(target, -100.0, 100.0))
+        self.z_actuator.move_to_position(self._z_command_target, instant=True)
 
     ###################################################################
     # Control Management
     ###################################################################
+    def _set_arm_torque(self, arm: SourcceyFollower, enabled: bool) -> None:
+        operation = arm.bus.enable_torque if enabled else arm.bus.disable_torque
+        _try_hardware("Change arm torque", operation)
+
     def apply_untorque_flags(self, action: dict[str, Any]) -> dict[str, Any]:
-        """
-        Apply per-arm untorque flags: disable/enable torque and strip positions.
-        Manages internal state for edge detection.
-
-        Returns:
-            dict: modified action with positions stripped if untorqued
-        """
-        left_flag = (
-            bool(action["untorque_left"])
-            if "untorque_left" in action
-            else self.untorque_left_prev
-        )
-        right_flag = (
-            bool(action["untorque_right"])
-            if "untorque_right" in action
-            else self.untorque_right_prev
-        )
-
-        # Left arm handling
-        if left_flag:
-            if not self.untorque_left_prev:
-                self.left_arm.bus.disable_torque()
-            action = {k: v for k, v in action.items() if not k.startswith("left_")}
-        elif "untorque_left" in action and self.untorque_left_prev:
-            self.left_arm.bus.enable_torque()
-
-        # Right arm handling
-        if right_flag:
-            if not self.untorque_right_prev:
-                self.right_arm.bus.disable_torque()
-            action = {k: v for k, v in action.items() if not k.startswith("right_")}
-        elif "untorque_right" in action and self.untorque_right_prev:
-            self.right_arm.bus.enable_torque()
-
-        # Update state
-        self.untorque_left_prev = left_flag
-        self.untorque_right_prev = right_flag
-
+        """Apply torque transitions and remove targets for relaxed arms."""
+        for name, arm in self._followers():
+            flag_key = f"untorque_{name}"
+            previous_key = f"untorque_{name}_prev"
+            previous = getattr(self, previous_key)
+            relaxed = bool(action.get(flag_key, previous))
+            if relaxed != previous and arm.is_connected:
+                self._set_arm_torque(arm, enabled=not relaxed)
+            if relaxed:
+                action = {key: value for key, value in action.items() if not key.startswith(f"{name}_")}
+            setattr(self, previous_key, relaxed)
         return action
 
     def update(self):
@@ -476,11 +489,8 @@ class Sourccey(Robot):
         Also marks internal untorque edge state as active so the next streamed command
         with untorque flags set to `False` will cleanly re-enable torque.
         """
-        for arm_name, arm in (("left", self.left_arm), ("right", self.right_arm)):
-            try:
-                arm.bus.disable_torque()
-            except Exception as e:
-                logger.warning(f"Failed to disable torque on {arm_name} arm: {e}")
+        for _, arm in self._available_followers():
+            self._set_arm_torque(arm, enabled=False)
 
         self.untorque_left_prev = True
         self.untorque_right_prev = True
@@ -491,10 +501,7 @@ class Sourccey(Robot):
         This is unused at the moment as we wont want the robot relaxing while its supposed to be active
         """
         self.stop_base()
-        try:
-            self.z_actuator.stop()
-        except Exception as e:
-            logger.warning(f"Failed to stop z actuator during watchdog: {e}")
+        _try_hardware("Stop lift during watchdog", self.z_actuator.stop)
         self.disable_arm_torque()
 
     ##################################################################################
@@ -573,5 +580,5 @@ class Sourccey(Robot):
     # Motor Configuration Functions
     ##################################################################################
     def set_baud_rate(self, baud_rate: int) -> None:
-        self.left_arm.bus.set_baudrate(baud_rate)
-        self.right_arm.bus.set_baudrate(baud_rate)
+        for _, arm in self._available_followers():
+            arm.bus.set_baudrate(baud_rate)

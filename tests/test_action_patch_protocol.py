@@ -73,6 +73,8 @@ class _FakeBus:
 
 
 class _FakeArm:
+    is_connected = True
+
     def __init__(self) -> None:
         self.bus = _FakeBus()
         self.actions: list[dict[str, float]] = []

@@ -4,6 +4,22 @@
 robot and its leader-arm teleoperator. It works with LeRobot without requiring
 Sourccey source files or patches inside the LeRobot repository.
 
+## Operation without follower arms
+
+The physical robot connects each follower arm independently. By default,
+`SourcceyConfig.allow_partial_connection=True` allows startup with one or both
+arms unavailable, while base, lift, and cameras continue operating. Failed arm
+connections are logged; `robot.available_arms` reports each arm's connection
+state. Commands and torque changes skip disconnected arms, and calibration of
+the whole robot operates only on connected arms. Explicitly selecting an absent
+arm for auto-calibration raises a connection error.
+
+Unavailable joint observations retain their existing keys with `NaN` values,
+including over the protobuf connection. These are missing measurements and
+must not be used as valid joint positions for training or policy execution.
+Set `allow_partial_connection=False` to require both arms at startup. Reconnect
+the robot after restoring an absent arm; automatic arm reconnection is not provided.
+
 ## Python SDK quickstart
 
 The customer-facing helpers live in `lerobot_robot_sourccey.sdk` and are also
