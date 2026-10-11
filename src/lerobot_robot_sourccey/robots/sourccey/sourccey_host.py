@@ -86,7 +86,6 @@ def main():
         duration = 0
 
         observation = None
-        last_sent_camera_timestamps: dict[str, float | None] = {}
         while duration < host.connection_time_s:
             loop_start_time = time.time()
             poll_relay(relay)
@@ -133,31 +132,14 @@ def main():
             # Send the observation to the remote agent
             try:
                 if observation is not None and observation != {}:
-                    current_camera_timestamps = {
-                        cam_key: getattr(robot.cameras[cam_key], "latest_timestamp", None)
-                        for cam_key in robot.cameras.keys()
-                    }
-                    has_new_camera_frame = (
-                        len(current_camera_timestamps) == 0
-                        or any(
-                            timestamp is not None
-                            and timestamp != last_sent_camera_timestamps.get(cam_key)
-                            for cam_key, timestamp in current_camera_timestamps.items()
-                        )
-                    )
-                    if not has_new_camera_frame:
-                        logging.debug("Skipping observation send: no new camera frame timestamps.")
-                        elapsed = time.time() - loop_start_time
-                        time.sleep(max(1 / host.max_loop_freq_hz - elapsed, 0))
-                        duration = time.perf_counter() - start
-                        continue
-
+                    # State is also the client's connection handshake. Publish at
+                    # the host loop rate even when cameras are stalled or expose
+                    # no timestamp; get_observation supplies available frames.
                     # Convert observation to protobuf using existing method
                     robot_state = robot.protobuf_converter.observation_to_protobuf(observation)
 
                     # Send protobuf message instead of JSON
                     host.zmq_observation_socket.send(robot_state.SerializeToString(), flags=zmq.NOBLOCK)
-                    last_sent_camera_timestamps = current_camera_timestamps
             except zmq.Again:
                 logging.info("Dropping observation, no client connected")
             except Exception as e:

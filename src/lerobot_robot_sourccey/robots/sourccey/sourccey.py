@@ -401,7 +401,16 @@ class Sourccey(Robot):
         return float(self._last_known_z_pos)
 
     def _read_camera(self, name: str) -> np.ndarray:
-        frame = _try_hardware(f"Read camera '{name}'", self.cameras[name].read_latest)
+        def read_frame():
+            camera = self.cameras[name]
+            read_latest = getattr(camera, "read_latest", None)
+            if callable(read_latest):
+                return read_latest()
+            # Stock LeRobot cameras expose async_read instead of read_latest.
+            # Bound the wait so a failed camera cannot stall the handshake.
+            return camera.async_read(timeout_ms=50)
+
+        frame = _try_hardware(f"Read camera '{name}'", read_frame)
         if frame is not None:
             return frame
         config = self.config.cameras[name]
