@@ -24,9 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--id", default="sourccey", help="Robot id used for arm calibration files.")
     parser.add_argument(
         "--arm",
-        choices=("both", "left", "right"),
+        choices=("both", "left", "right", "z"),
         default="both",
-        help="Calibrate both arms and Z, or only one arm (default: both).",
+        help="Calibrate both arms and Z, one arm, or only the Z actuator (default: both).",
     )
     parser.add_argument("--left-arm-port", default=None, help="Override the left arm serial port.")
     parser.add_argument("--right-arm-port", default=None, help="Override the right arm serial port.")
@@ -60,6 +60,34 @@ def run_calibration(args: argparse.Namespace) -> None:
         config.right_arm_port = args.right_arm_port
 
     robot = Sourccey(config)
+    if args.arm == "z":
+        driver_connected = False
+        actuator_connected = False
+        try:
+            robot.dc_motors_controller.connect()
+            driver_connected = True
+            robot.z_actuator.connect()
+            actuator_connected = True
+            result = robot.z_actuator.calibrator.auto_calibrate(full_reset=args.full_reset)
+            if result is None:
+                raise RuntimeError("Z actuator calibration did not complete")
+        finally:
+            try:
+                robot.z_actuator.stop()
+            except Exception:
+                logger.exception("Failed to stop Z actuator after calibration")
+            if actuator_connected:
+                try:
+                    robot.z_actuator.disconnect()
+                except Exception:
+                    logger.exception("Failed to disconnect Z actuator after calibration")
+            if driver_connected:
+                try:
+                    robot.dc_motors_controller.disconnect()
+                except Exception:
+                    logger.exception("Failed to disconnect DC motor controller after Z calibration")
+        return
+
     selected_arm = None if args.arm == "both" else args.arm
 
     # An arm-only run should not initialize the other arm, base, Z actuator, or

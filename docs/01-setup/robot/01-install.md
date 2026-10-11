@@ -42,6 +42,24 @@ After installation, the equivalent packaged command is:
 uv run sourccey-setup robot
 ```
 
-Next, verify the [robot devices](02-devices.md).
+`sourccey-setup robot` is a provisioning command, not a package-installation
+command. On Linux it installs packaged udev rules and performs read-only
+battery checks. It never writes battery configuration unless
+`--configure-battery` or `--flash-battery` is explicitly supplied. A
+factory-prepared Sourccey does not need this command during normal updates.
+
+## Install from `lerobot-vulcan`
+
+From the `lerobot-vulcan` checkout on a factory-prepared robot computer:
+
+```bash
+uv sync --locked --extra sourccey-robot
+```
+
+This installs the locked robot-side dependencies. It does not change Linux
+device rules, battery configuration, or hardware calibration.
+
+Next, [start the robot host](05-host.md). If this is a fresh Linux computer or
+the device aliases are missing, first [provision the robot devices](02-devices.md).
 
 Return to the [robot setup index](README.md).

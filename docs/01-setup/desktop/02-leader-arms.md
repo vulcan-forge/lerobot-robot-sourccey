@@ -41,6 +41,10 @@ uv run sourccey-teleop-calibrate \
   --right-arm-port="$RIGHT_ARM_PORT"
 ```
 
+This command applies packaged calibration values. The leader arms do not need
+to be placed in a calibration pose or stand, and the command does not ask you
+to move each joint through its range.
+
 To calibrate only one leader arm:
 
 ```bash

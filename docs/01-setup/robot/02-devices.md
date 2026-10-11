@@ -1,10 +1,21 @@
-# Verify robot devices
+# Provision and verify robot devices
+
+This procedure is for a fresh Linux installation, a replaced robot computer,
+or recovery when stable device aliases are missing. Skip it on a working,
+factory-prepared Sourccey.
 
 The robot setup command installs Sourccey's packaged udev rules, which provide
 stable names for USB hardware even when Linux changes its `ttyUSB` or video
 device numbers.
 
-Run the installed setup command, then reconnect the USB devices:
+Preview the changes:
+
+```bash
+uv run sourccey-setup robot --dry-run
+```
+
+Apply the packaged udev rules and run the read-only battery checks, then
+reconnect the USB devices:
 
 ```bash
 uv run sourccey-setup robot

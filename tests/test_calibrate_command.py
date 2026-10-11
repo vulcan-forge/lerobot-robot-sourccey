@@ -16,6 +16,24 @@ class FakeDevice:
         self.calls.append(("disconnect",))
 
 
+class FakeZCalibrator:
+    def __init__(self, calls: list[tuple]) -> None:
+        self.calls = calls
+
+    def auto_calibrate(self, *, full_reset: bool):
+        self.calls.append(("z_auto_calibrate", full_reset))
+        return object()
+
+
+class FakeZActuator(FakeDevice):
+    def __init__(self) -> None:
+        super().__init__()
+        self.calibrator = FakeZCalibrator(self.calls)
+
+    def stop(self) -> None:
+        self.calls.append(("stop",))
+
+
 class FakeRobot(FakeDevice):
     instances: list["FakeRobot"] = []
 
@@ -24,6 +42,8 @@ class FakeRobot(FakeDevice):
         self.config = config
         self.left_arm = FakeDevice()
         self.right_arm = FakeDevice()
+        self.dc_motors_controller = FakeDevice()
+        self.z_actuator = FakeZActuator()
         self.instances.append(self)
 
     def auto_calibrate(self, *, full_reset: bool, arm: str | None) -> None:
@@ -69,6 +89,24 @@ def test_arm_only_full_reset_does_not_connect_whole_robot(monkeypatch) -> None:
     assert robot.left_arm.calls == [("connect", False), ("disconnect",)]
     assert robot.right_arm.calls == []
     assert robot.calls == [("auto_calibrate", True, "left")]
+
+
+def test_z_only_full_reset_does_not_connect_arms(monkeypatch) -> None:
+    FakeRobot.instances.clear()
+    monkeypatch.setattr(calibrate_command, "Sourccey", FakeRobot)
+
+    calibrate_command.run_calibration(make_args(arm="z", full_reset=True, yes=True))
+
+    robot = FakeRobot.instances[-1]
+    assert robot.left_arm.calls == []
+    assert robot.right_arm.calls == []
+    assert robot.dc_motors_controller.calls == [("connect", True), ("disconnect",)]
+    assert robot.z_actuator.calls == [
+        ("connect", True),
+        ("z_auto_calibrate", True),
+        ("stop",),
+        ("disconnect",),
+    ]
 
 
 def test_full_reset_requires_explicit_acknowledgement(capsys) -> None:

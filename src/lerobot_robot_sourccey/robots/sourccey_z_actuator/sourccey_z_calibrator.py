@@ -41,6 +41,14 @@ class SourcceyZCalibrator:
     SEEK_BOTTOM_MIN_TRAVEL_RAW = 0
     RETURN_TOP_MIN_DRIVE_S = 1.0
     RETURN_TOP_MIN_TRAVEL_RAW = 0
+    # Full calibration must not inherit an old normalized range. Repeatability
+    # also keeps a transient mid-stroke pause from becoming a saved endpoint.
+    RAW_ADC_MIN = 0
+    RAW_ADC_MAX = 1023
+    ENDPOINT_BACKOFF_S = 1.0
+    ENDPOINT_BACKOFF_MIN_TRAVEL_RAW = 5
+    ENDPOINT_REPEAT_TOLERANCE_RAW = 12
+    MIN_CALIBRATION_SPAN_RAW = 50
 
     def __init__(
         self,
@@ -181,14 +189,17 @@ class SourcceyZCalibrator:
             min_elapsed_s=round(float(min_elapsed_s), 3),
             min_travel_raw=int(min_travel_raw),
         )
-        self._drive(cmd)
-        raw = self._wait_until_stable(
-            cmd,
-            phase=phase,
-            min_elapsed_s=min_elapsed_s,
-            min_travel_raw=min_travel_raw,
-        )
-        self.actuator.stop()
+        try:
+            self._drive(cmd)
+            raw = self._wait_until_stable(
+                cmd,
+                phase=phase,
+                min_elapsed_s=min_elapsed_s,
+                min_travel_raw=min_travel_raw,
+            )
+        finally:
+            # Never leave the H-bridge energized after a timeout or ADC error.
+            self.actuator.stop()
         time.sleep(0.25)
         self._log_phase(
             phase,
@@ -198,6 +209,74 @@ class SourcceyZCalibrator:
             travel_raw=int(self._last_move_travel_raw),
         )
         return int(raw)
+
+    def _move_for_seconds(self, cmd: float, seconds: float) -> tuple[int, int]:
+        """Move briefly without normalized position limits, returning raw start/end."""
+        start_raw = self._read_raw()
+        try:
+            end_raw = self._wait_for_seconds(cmd, seconds)
+        finally:
+            self.actuator.stop()
+        time.sleep(0.25)
+        return int(start_raw), int(end_raw)
+
+    def _seek_repeatable_endpoint(
+        self,
+        cmd: float,
+        *,
+        phase: str,
+        min_elapsed_s: float,
+        min_travel_raw: int,
+    ) -> int:
+        first = self._move_to_endpoint(
+            cmd,
+            phase=f"{phase}_first",
+            min_elapsed_s=min_elapsed_s,
+            min_travel_raw=min_travel_raw,
+        )
+
+        backoff_start, backoff_end = self._move_for_seconds(-cmd, self.ENDPOINT_BACKOFF_S)
+        backoff_travel = abs(backoff_end - backoff_start)
+        if backoff_travel < self.ENDPOINT_BACKOFF_MIN_TRAVEL_RAW:
+            raise CalibrationPhaseError(
+                f"z:{phase} endpoint confirmation could not back away "
+                f"(travel_raw={backoff_travel}, required={self.ENDPOINT_BACKOFF_MIN_TRAVEL_RAW})"
+            )
+
+        second = self._move_to_endpoint(
+            cmd,
+            phase=f"{phase}_confirm",
+            min_elapsed_s=min_elapsed_s,
+            min_travel_raw=min_travel_raw,
+        )
+        delta = abs(second - first)
+        if delta > self.ENDPOINT_REPEAT_TOLERANCE_RAW:
+            # The first stop may have been a transient mid-stroke hesitation.
+            # Back away from the second result and require it to repeat once
+            # before rejecting the calibration.
+            retry_start, retry_end = self._move_for_seconds(-cmd, self.ENDPOINT_BACKOFF_S)
+            retry_travel = abs(retry_end - retry_start)
+            if retry_travel < self.ENDPOINT_BACKOFF_MIN_TRAVEL_RAW:
+                raise CalibrationPhaseError(
+                    f"z:{phase} retry could not back away "
+                    f"(travel_raw={retry_travel}, required={self.ENDPOINT_BACKOFF_MIN_TRAVEL_RAW})"
+                )
+            third = self._move_to_endpoint(
+                cmd,
+                phase=f"{phase}_retry",
+                min_elapsed_s=min_elapsed_s,
+                min_travel_raw=min_travel_raw,
+            )
+            retry_delta = abs(third - second)
+            if retry_delta > self.ENDPOINT_REPEAT_TOLERANCE_RAW:
+                raise CalibrationPhaseError(
+                    f"z:{phase} endpoint was not repeatable "
+                    f"(first_raw={first}, second_raw={second}, third_raw={third}, "
+                    f"retry_delta_raw={retry_delta}, "
+                    f"tolerance_raw={self.ENDPOINT_REPEAT_TOLERANCE_RAW}); no calibration was saved"
+                )
+            return int(third)
+        return int(second)
 
     def _verify_top(self, *, expected_raw_top: int) -> int:
         started_at = time.monotonic()
@@ -318,28 +397,57 @@ class SourcceyZCalibrator:
         except Exception:
             pass
 
+        sensor = self.actuator.sensor
+        previous_raw_min = int(sensor.calibration_min)
+        previous_raw_max = int(sensor.calibration_max)
+        previous_invert = bool(sensor.invert)
+
+        # Clear the active normalized bounds before moving. Endpoint detection
+        # and motor travel are now independent of a bad saved min/max.
+        sensor.set_calibration(
+            raw_min=self.RAW_ADC_MIN,
+            raw_max=self.RAW_ADC_MAX,
+            invert=previous_invert,
+        )
+        self.actuator.invert = bool(sensor.invert)
         full_reset_started_at = time.monotonic()
 
-        # Phase 1: drive to bottom first so the full reset naturally finishes at the top.
-        raw_bottom = self._move_to_endpoint(
-            self.down_cmd,
-            phase="seek_bottom",
-            min_elapsed_s=self.SEEK_BOTTOM_MIN_DRIVE_S,
-            min_travel_raw=self.SEEK_BOTTOM_MIN_TRAVEL_RAW,
-        )
+        try:
+            raw_bottom = self._seek_repeatable_endpoint(
+                self.down_cmd,
+                phase="seek_bottom",
+                min_elapsed_s=self.SEEK_BOTTOM_MIN_DRIVE_S,
+                min_travel_raw=self.SEEK_BOTTOM_MIN_TRAVEL_RAW,
+            )
+            raw_top = self._seek_repeatable_endpoint(
+                self.up_cmd,
+                phase="return_top",
+                min_elapsed_s=self.RETURN_TOP_MIN_DRIVE_S,
+                min_travel_raw=self.RETURN_TOP_MIN_TRAVEL_RAW,
+            )
+            raw_top = self._verify_top(expected_raw_top=raw_top)
 
-        # Phase 2: return from bottom to top and verify the final top reading.
-        raw_top = self._return_to_top_and_verify()
+            invert = bool(raw_bottom > raw_top)
+            raw_min = int(min(raw_bottom, raw_top))
+            raw_max = int(max(raw_bottom, raw_top))
+            span_raw = raw_max - raw_min
+            if span_raw < self.MIN_CALIBRATION_SPAN_RAW:
+                raise CalibrationPhaseError(
+                    "Z calibration span is too small; refusing to replace the previous calibration "
+                    f"(raw_min={raw_min}, raw_max={raw_max}, span_raw={span_raw}, "
+                    f"required={self.MIN_CALIBRATION_SPAN_RAW})"
+                )
+        except BaseException:
+            sensor.set_calibration(
+                raw_min=previous_raw_min,
+                raw_max=previous_raw_max,
+                invert=previous_invert,
+            )
+            self.actuator.invert = bool(sensor.invert)
+            raise
 
-        # Guarantee the measured bottom maps to -100 and the measured top maps to +100.
-        # If the raw signal increases as we move downward, we need inversion to preserve
-        # the public position convention.
-        invert = bool(raw_bottom > raw_top)
-        raw_min = int(min(raw_bottom, raw_top))
-        raw_max = int(max(raw_bottom, raw_top))
-
-        self.actuator.sensor.set_calibration(raw_min=raw_min, raw_max=raw_max, invert=invert)
-        self.actuator.invert = bool(self.actuator.sensor.invert)
+        sensor.set_calibration(raw_min=raw_min, raw_max=raw_max, invert=invert)
+        self.actuator.invert = bool(sensor.invert)
         self.actuator._save_calibration()
         self._log_phase(
             "save_calibration",
