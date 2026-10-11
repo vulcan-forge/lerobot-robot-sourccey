@@ -36,7 +36,7 @@ from .modules.slam import (
 
 # Import protobuf modules
 from ..protobuf.generated import sourccey_pb2
-from ..protobuf.sourccey_protobuf import PROTOCOL_VERSION, SourcceyProtobuf
+from ..protobuf.sourccey_protobuf import SourcceyProtobuf
 
 class SourcceyClient(Robot):
     config_class = SourcceyClientConfig
@@ -249,12 +249,6 @@ class SourcceyClient(Robot):
             initial_observation = self.zmq_observation_socket.recv(zmq.NOBLOCK)
             robot_state = sourccey_pb2.SourcceyRobotState()
             robot_state.ParseFromString(initial_observation)
-            if robot_state.protocol_version != PROTOCOL_VERSION:
-                raise DeviceNotConnectedError(
-                    "Incompatible Sourccey Host protocol version "
-                    f"{robot_state.protocol_version}; this client requires {PROTOCOL_VERSION}. "
-                    "Install the same lerobot-robot-sourccey release on the host and client."
-                )
             self._pending_observation_bytes = initial_observation
 
             self._is_connected = True

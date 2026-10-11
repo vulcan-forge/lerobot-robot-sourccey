@@ -2,62 +2,37 @@ from __future__ import annotations
 
 import pytest
 
-from lerobot_robot_sourccey.robots.protobuf.generated import sourccey_pb2
-from lerobot_robot_sourccey.robots.protobuf.sourccey_protobuf import (
-    PROTOCOL_VERSION,
-    SourcceyProtobuf,
-)
+from lerobot_robot_sourccey.robots.protobuf.sourccey_protobuf import SourcceyProtobuf
 from lerobot_robot_sourccey.robots.sourccey.sourccey import Sourccey
 
 
-@pytest.mark.parametrize(
-    "action",
-    [
-        {"x.vel": 0.0},
-        {"left_shoulder_pan.pos": 0.0},
-        {"right_gripper.pos": 42.0, "z.pos": -25.0},
-        {"untorque_left": False},
-        {"untorque_right": True},
-    ],
-)
-def test_action_patch_round_trip_preserves_exact_field_presence(action) -> None:
+def test_action_uses_dev12_full_message_format() -> None:
     converter = SourcceyProtobuf()
-
-    message = converter.action_to_protobuf(action)
+    message = converter.action_to_protobuf({"x.vel": 0.2, "right_gripper.pos": 42.0})
     decoded = converter.protobuf_to_action(message)
 
-    assert message.protocol_version == PROTOCOL_VERSION
-    assert set(message.update_fields) == set(action)
-    assert decoded == pytest.approx(action)
+    assert not hasattr(message, "protocol_version")
+    assert not hasattr(message, "update_fields")
+    assert message.HasField("left_arm_target_joints")
+    assert message.HasField("right_arm_target_joints")
+    assert message.HasField("base_target_velocity")
+    assert decoded["x.vel"] == pytest.approx(0.2)
+    assert decoded["right_gripper.pos"] == pytest.approx(42.0)
+    assert decoded["left_shoulder_pan.pos"] == pytest.approx(0.0)
 
 
-def test_base_only_patch_does_not_create_arm_or_lift_payloads() -> None:
+def test_dev12_format_preserves_optional_z_presence() -> None:
     message = SourcceyProtobuf().action_to_protobuf({"x.vel": 0.2})
 
-    assert list(message.update_fields) == ["x.vel"]
-    assert message.HasField("base_target_velocity")
-    assert not message.HasField("left_arm_target_joints")
-    assert not message.HasField("right_arm_target_joints")
     assert not message.HasField("base_target_position")
+    with_z = SourcceyProtobuf().action_to_protobuf({"z.pos": -25.0})
+    assert with_z.HasField("base_target_position")
 
 
-def test_legacy_command_is_rejected_instead_of_defaulting_missing_fields() -> None:
-    legacy_message = sourccey_pb2.SourcceyRobotAction()
-    legacy_message.base_target_velocity.x_vel = 0.2
-
-    with pytest.raises(ValueError, match="protocol version 0"):
-        SourcceyProtobuf().protobuf_to_action(legacy_message)
-
-
-def test_unknown_action_key_is_rejected_instead_of_silently_ignored() -> None:
-    with pytest.raises(ValueError, match="unknown.control"):
-        SourcceyProtobuf().action_to_protobuf({"unknown.control": 1.0})
-
-
-def test_observation_advertises_protocol_version() -> None:
+def test_observation_uses_dev12_schema_without_version_field() -> None:
     message = SourcceyProtobuf().observation_to_protobuf({})
 
-    assert message.protocol_version == PROTOCOL_VERSION
+    assert not hasattr(message, "protocol_version")
 
 
 class _FakeBus:
