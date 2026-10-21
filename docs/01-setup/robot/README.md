@@ -10,6 +10,7 @@ The following procedures are not required during normal installation:
 - [Robot devices](02-devices.md) — provision or verify Linux device aliases on
   a fresh or repaired computer.
 - [Battery](03-battery.md) — inspect or recover the battery gauge.
+- [Hardware checks](06-hardware-checks.md) — verify cameras, motors, LiDAR and IMU after service.
 - [Calibration](04-calibrate.md) — restore packaged ranges or redetect physical
   limits after hardware service.
 

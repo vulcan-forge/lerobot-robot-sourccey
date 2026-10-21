@@ -165,3 +165,23 @@ The desktop application launches these package commands. Install this checkout
 with `uv pip install -e "../packages/lerobot-robot-sourccey[desktop]"` in the
 LeRobot environment and use `uv run --no-sync` while the release pin still points
 to the previously published package. Publishing and updating pins is a separate step.
+
+## Hardware diagnostics
+
+Installed commands cover remote and direct camera checks, motor telemetry and
+electrical checks, bottom-camera naming, and LiDAR/IMU health:
+
+```bash
+uv run --no-sync sourccey-check-eye-cameras --remote-ip 192.168.1.237 --skip-bottom
+uv run --no-sync sourccey-check-arm-cameras --remote-ip 192.168.1.237
+uv run --no-sync sourccey-check-eye-cameras-local --include-bottom
+uv run --no-sync sourccey-check-arm-cameras-local
+uv run --no-sync sourccey-check-bottom-camera --verify-names
+uv run --no-sync sourccey-check-motors
+uv run --no-sync sourccey-check-lidar-imu
+```
+
+Run direct checks on the robot with the host stopped. Remote checks consume only
+observations and require the host to be running. Motor motion remains opt-in
+through `--wiggle` or `--z-stroke`, with their existing interactive prompts.
+See [Hardware checks](docs/01-setup/robot/06-hardware-checks.md) for the complete guide.

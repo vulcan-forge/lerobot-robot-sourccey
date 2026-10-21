@@ -41,6 +41,8 @@ stream after installation with:
 uv run sourccey-lidar-check
 ```
 
+Use the [hardware checks](06-hardware-checks.md) for camera, motor, and sensor diagnostics.
+
 Next, inspect the [battery](03-battery.md), or return to the [robot setup
 index](README.md).
 

@@ -66,6 +66,13 @@ all = [
 ]
 
 [project.scripts]
+sourccey-check-eye-cameras = "lerobot_robot_sourccey.diagnostics.eye_cameras:main"
+sourccey-check-arm-cameras = "lerobot_robot_sourccey.diagnostics.arm_cameras:main"
+sourccey-check-eye-cameras-local = "lerobot_robot_sourccey.diagnostics.eye_cameras_local:main"
+sourccey-check-arm-cameras-local = "lerobot_robot_sourccey.diagnostics.arm_cameras_local:main"
+sourccey-check-bottom-camera = "lerobot_robot_sourccey.diagnostics.bottom_camera:main"
+sourccey-check-motors = "lerobot_robot_sourccey.diagnostics.motors:main"
+sourccey-check-lidar-imu = "lerobot_robot_sourccey.diagnostics.lidar_imu:main"
 sourccey-record = "lerobot_robot_sourccey.record:main"
 sourccey-teleoperate = "lerobot_robot_sourccey.teleoperate:main"
 sourccey-setup = "lerobot_robot_sourccey.setup:main"
