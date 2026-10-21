@@ -20,6 +20,10 @@ must not be used as valid joint positions for training or policy execution.
 Set `allow_partial_connection=False` to require both arms at startup. Reconnect
 the robot after restoring an absent arm; automatic arm reconnection is not provided.
 
+For explicit missing-arm policy inputs and desktop stop-file control, see
+[Policy rollout](docs/rollout.md). The package's `sourccey-rollout` command uses
+LeRobot's rollout engines and strategies.
+
 ## Python SDK quickstart
 
 The customer-facing helpers live in `lerobot_robot_sourccey.sdk` and are also

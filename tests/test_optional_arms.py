@@ -10,7 +10,7 @@ from lerobot_robot_sourccey.robots.sourccey.sourccey import Sourccey
 def make_robot(left, right, strict=False):
     robot = object.__new__(Sourccey)
     robot.id = "test"
-    robot.config = SimpleNamespace(allow_partial_connection=not strict)
+    robot.config = SimpleNamespace(allow_partial_connection=not strict, missing_arm_positions={})
     robot._connected = False
     robot._connected_cameras = set()
     robot.cameras = {}

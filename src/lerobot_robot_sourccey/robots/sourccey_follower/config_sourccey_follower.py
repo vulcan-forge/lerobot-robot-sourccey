@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
+from lerobot_robot_sourccey.motors.models import sourccey_motor_models
 
 from lerobot.cameras.configs import CameraConfig
 from lerobot_robot_sourccey.cameras import SourcceyOpenCVCameraConfig
@@ -22,15 +23,6 @@ from lerobot.robots.config import RobotConfig
 from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
 
 
-def sourccey_motor_models() -> dict[str, str]:
-    return {
-        "shoulder_pan": "sts3215",
-        "shoulder_lift": "sts3250",
-        "elbow_flex": "sts3250",
-        "wrist_flex": "sts3215",
-        "wrist_roll": "sts3215",
-        "gripper": "sts3215",
-    }
 
 def sourccey_cameras_config() -> dict[str, CameraConfig]:
     return {

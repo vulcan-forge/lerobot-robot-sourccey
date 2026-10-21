@@ -14,12 +14,15 @@
 # limitations under the License.
 
 from dataclasses import dataclass, field
+from lerobot_robot_sourccey.motors.models import sourccey_motor_models
 
 from lerobot.cameras.configs import CameraConfig
 from lerobot_robot_sourccey.cameras import SourcceyOpenCVCameraConfig
 from lerobot.robots.config import RobotConfig
 from lerobot_robot_sourccey.motors.dc_motors_controller import DCMotor, MotorNormMode
 from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
+
+from lerobot_robot_sourccey.policy_observations import validate_missing_arm_positions
 
 from .modules.slam.config import SlamInputConfig
 
@@ -36,15 +39,6 @@ def sourccey_cameras_config() -> dict[str, CameraConfig]:
         "wrist_right": _opencv_camera("/dev/cameraWristRight"),
     }
 
-def sourccey_motor_models() -> dict[str, str]:
-    return {
-        "shoulder_pan": "sts3215",
-        "shoulder_lift": "sts3250",
-        "elbow_flex": "sts3250",
-        "wrist_flex": "sts3215",
-        "wrist_roll": "sts3215",
-        "gripper": "sts3215",
-    }
 
 def sourccey_dc_motors() -> dict[str, DCMotor]:
     return {
@@ -67,6 +61,8 @@ def sourccey_dc_motors_config() -> dict:
 class SourcceyConfig(RobotConfig):
     # Keep base, lift, and cameras usable with either or both arms absent.
     allow_partial_connection: bool = True
+    # Explicit policy-only placeholders in the configured joint units. Empty preserves raw NaNs.
+    missing_arm_positions: dict[str, float] = field(default_factory=dict)
 
     left_arm_port: str = "/dev/robotLeftArm"
     right_arm_port: str = "/dev/robotRightArm"
@@ -97,6 +93,11 @@ class SourcceyConfig(RobotConfig):
     right_arm_disable_torque_on_disconnect: bool = True
     right_arm_max_relative_target: int | None = None
     right_arm_use_degrees: bool = False
+
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        validate_missing_arm_positions(self.missing_arm_positions)
 
 
 @dataclass
@@ -135,11 +136,14 @@ class SourcceyHostConfig:
     imu_lis3mdl_address: int = 0x1C
 
 
+
+
 @RobotConfig.register_subclass("sourccey_client")
 @dataclass
 class SourcceyClientConfig(RobotConfig):
     # Network Configuration
     remote_ip: str
+    missing_arm_positions: dict[str, float] = field(default_factory=dict)
     port_zmq_cmd: int = 5555
     port_zmq_observations: int = 5556
     # SLAM sidecar input stream (sourccey-slam expects slam_input.v1).
@@ -197,6 +201,8 @@ class SourcceyClientConfig(RobotConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+
+        validate_missing_arm_positions(self.missing_arm_positions)
 
         # Migrate flat legacy flags into nested SLAM config when explicitly provided.
         if self.slam_input_enabled is not None:

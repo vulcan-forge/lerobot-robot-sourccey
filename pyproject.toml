@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lerobot_robot_sourccey"
-version = "0.2.4.dev19"
+version = "0.2.4.dev20"
 description = "Sourccey robot and teleoperator integration for LeRobot"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -32,6 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+rollout = ["lerobot[core-scripts]>=0.6.2,<0.7"]
 record = [
     "lerobot[core-scripts]>=0.6,<0.7",
 ]
@@ -52,20 +53,19 @@ dev = [
     "grpcio-tools==1.73.1",
     "pytest>=8",
 ]
-# User-facing installation profiles. Keep the lower-level extras above for
-# backward compatibility and compose them here so their dependency lists have
-# a single source of truth.
+# User-facing profiles compose the shared dependency groups above.
 robot = [
     "lerobot-robot-sourccey[hardware]",
 ]
 desktop = [
-    "lerobot-robot-sourccey[record,dataset]",
+    "lerobot-robot-sourccey[record,dataset,rollout]",
 ]
 all = [
     "lerobot-robot-sourccey[robot,desktop,dev]",
 ]
 
 [project.scripts]
+sourccey-rollout = "lerobot_robot_sourccey.rollout:main"
 sourccey-check-eye-cameras = "lerobot_robot_sourccey.diagnostics.eye_cameras:main"
 sourccey-check-arm-cameras = "lerobot_robot_sourccey.diagnostics.arm_cameras:main"
 sourccey-check-eye-cameras-local = "lerobot_robot_sourccey.diagnostics.eye_cameras_local:main"

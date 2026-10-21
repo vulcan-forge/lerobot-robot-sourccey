@@ -132,26 +132,28 @@ class SourcceyProtobuf:
             action = {}
 
             # Convert left arm action
-            left_motor_pos = action_msg.left_arm_target_joints
-            action.update({
-                "left_shoulder_pan.pos": left_motor_pos.shoulder_pan,
-                "left_shoulder_lift.pos": left_motor_pos.shoulder_lift,
-                "left_elbow_flex.pos": left_motor_pos.elbow_flex,
-                "left_wrist_flex.pos": left_motor_pos.wrist_flex,
-                "left_wrist_roll.pos": left_motor_pos.wrist_roll,
-                "left_gripper.pos": left_motor_pos.gripper,
-            })
+            if action_msg.HasField("left_arm_target_joints"):
+                left_motor_pos = action_msg.left_arm_target_joints
+                action.update({
+                    "left_shoulder_pan.pos": left_motor_pos.shoulder_pan,
+                    "left_shoulder_lift.pos": left_motor_pos.shoulder_lift,
+                    "left_elbow_flex.pos": left_motor_pos.elbow_flex,
+                    "left_wrist_flex.pos": left_motor_pos.wrist_flex,
+                    "left_wrist_roll.pos": left_motor_pos.wrist_roll,
+                    "left_gripper.pos": left_motor_pos.gripper,
+                })
 
             # Convert right arm action
-            right_motor_pos = action_msg.right_arm_target_joints
-            action.update({
-                "right_shoulder_pan.pos": right_motor_pos.shoulder_pan,
-                "right_shoulder_lift.pos": right_motor_pos.shoulder_lift,
-                "right_elbow_flex.pos": right_motor_pos.elbow_flex,
-                "right_wrist_flex.pos": right_motor_pos.wrist_flex,
-                "right_wrist_roll.pos": right_motor_pos.wrist_roll,
-                "right_gripper.pos": right_motor_pos.gripper,
-            })
+            if action_msg.HasField("right_arm_target_joints"):
+                right_motor_pos = action_msg.right_arm_target_joints
+                action.update({
+                    "right_shoulder_pan.pos": right_motor_pos.shoulder_pan,
+                    "right_shoulder_lift.pos": right_motor_pos.shoulder_lift,
+                    "right_elbow_flex.pos": right_motor_pos.elbow_flex,
+                    "right_wrist_flex.pos": right_motor_pos.wrist_flex,
+                    "right_wrist_roll.pos": right_motor_pos.wrist_roll,
+                    "right_gripper.pos": right_motor_pos.gripper,
+                })
 
             # Convert base action
             base_vel = action_msg.base_target_velocity

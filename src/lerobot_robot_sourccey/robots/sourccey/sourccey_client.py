@@ -16,6 +16,8 @@
 import base64
 import json
 import logging
+from lerobot_robot_sourccey.calibration import CalibrationRecoveryMixin
+from lerobot_robot_sourccey.policy_observations import MissingArmObservations
 from functools import cached_property
 import time
 from typing import Any, Dict, Optional, Tuple
@@ -38,13 +40,14 @@ from .modules.slam import (
 from ..protobuf.generated import sourccey_pb2
 from ..protobuf.sourccey_protobuf import SourcceyProtobuf
 
-class SourcceyClient(Robot):
+class SourcceyClient(CalibrationRecoveryMixin, Robot):
     config_class = SourcceyClientConfig
     name = "sourccey_client"
 
     def __init__(self, config: SourcceyClientConfig):
         super().__init__(config)
         self.config = config
+        self._policy_observations = MissingArmObservations(config.missing_arm_positions)
         self.id = config.id
         self.robot_type = config.type
 
@@ -336,6 +339,8 @@ class SourcceyClient(Robot):
         if is_fresh and self.slam_input_enabled:
             self._publish_slam_input(observation=obs_dict, frames=frames)
 
+        if self.config.missing_arm_positions:
+            obs_dict = self._policy_observations.observation(obs_dict)
         return obs_dict
 
     def send_action(self, action: dict[str, Any]) -> dict[str, Any]:
@@ -359,7 +364,12 @@ class SourcceyClient(Robot):
 
         # Encode only supplied controls. Omitted fields are intentionally left
         # unchanged by the host, including arm joints, base axes, and the lift.
+        if self.config.missing_arm_positions:
+            action = self._policy_observations.action(action)
         robot_action = self.protobuf_converter.action_to_protobuf(action)
+        if self.config.missing_arm_positions:
+            for arm in self._policy_observations.missing_arms:
+                robot_action.ClearField(f"{arm}_arm_target_joints")
         self.zmq_cmd_socket.send(robot_action.SerializeToString())
         self._last_sent_action.update(action)
 

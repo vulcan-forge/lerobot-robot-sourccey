@@ -12,3 +12,6 @@ single large README.
 4. [AI and datasets](04-ai/README.md) — manage datasets and train policies.
 
 Return to the [package overview](../README.md).
+
+[Policy rollout and desktop shutdown](rollout.md) describes package-owned stop
+control, missing-arm policy inputs, and calibration recovery.

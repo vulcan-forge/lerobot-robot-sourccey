@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import logging
+from lerobot_robot_sourccey.calibration import CalibrationRecoveryMixin
 import time
 from functools import cached_property
 from typing import Any
@@ -39,7 +40,7 @@ from lerobot_robot_sourccey.robots.sourccey_follower.sourccey_follower_safety im
 
 logger = logging.getLogger(__name__)
 
-class SourcceyFollower(Robot):
+class SourcceyFollower(CalibrationRecoveryMixin, Robot):
     config_class = SourcceyFollowerConfig
     name = "sourccey_follower"
 

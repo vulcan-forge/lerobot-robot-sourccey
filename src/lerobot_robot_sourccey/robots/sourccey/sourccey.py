@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import logging
+from lerobot_robot_sourccey.calibration import CalibrationRecoveryMixin
+from lerobot_robot_sourccey.policy_observations import MissingArmObservations
 import threading
 import time
 from collections.abc import Callable
@@ -57,7 +59,7 @@ def _try_hardware(operation: str, callback: Callable[[], T], fallback: T | None 
         return fallback
 
 
-class Sourccey(Robot):
+class Sourccey(CalibrationRecoveryMixin, Robot):
     """
     The robot includes a four mecanum wheel mobile base, 1 DC actuator, and 2 remote follower arms.
     The leader arm is connected locally (on the laptop) and its joint positions are recorded and then
@@ -71,6 +73,7 @@ class Sourccey(Robot):
     def __init__(self, config: SourcceyConfig):
         super().__init__(config)
         self.config = config
+        self._policy_observations = MissingArmObservations(config.missing_arm_positions)
 
         left_arm_config = SourcceyFollowerConfig(
             id=f"{config.id}_left" if config.id else None,
@@ -368,7 +371,10 @@ class Sourccey(Robot):
     ###################################################################
 
     def get_observation(self) -> dict[str, Any]:
-        return _try_hardware("Get observation", self._read_observation, {})
+        observation = _try_hardware("Get observation", self._read_observation, {})
+        if self.config.missing_arm_positions:
+            observation = self._policy_observations.observation(observation)
+        return observation
 
     def _read_observation(self) -> dict[str, Any]:
         start = time.perf_counter()

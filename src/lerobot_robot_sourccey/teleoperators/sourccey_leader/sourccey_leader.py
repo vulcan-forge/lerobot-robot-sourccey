@@ -15,6 +15,7 @@
 
 import json
 import logging
+from lerobot_robot_sourccey.calibration import CalibrationRecoveryMixin
 import time
 from pathlib import Path
 
@@ -32,7 +33,7 @@ from .sourccey_leader_calibrator import SourcceyLeaderCalibrator
 logger = logging.getLogger(__name__)
 
 
-class SourcceyLeader(Teleoperator):
+class SourcceyLeader(CalibrationRecoveryMixin, Teleoperator):
     """
     [Sourccey Leader Teleoperator] designed by Vulcan
     """
