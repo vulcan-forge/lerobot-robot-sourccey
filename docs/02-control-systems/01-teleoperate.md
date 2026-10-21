@@ -4,16 +4,14 @@ Use teleoperation to verify the robot connection, leader arms, keyboard
 controls, and cameras before recording a dataset.
 
 ```bash
-uv run --no-sync lerobot-teleoperate \
+uv run --no-sync sourccey-teleoperate \
   --robot.type=sourccey_client \
   --robot.id=sourccey \
   --robot.remote_ip=192.168.1.230 \
-  --teleop.type=bi_sourccey_leader \
+  --teleop.type=sourccey_teleoperator \
   --teleop.id=sourccey_leader \
   --teleop.left_arm_port=COM14 \
   --teleop.right_arm_port=COM13 \
-  --teleop_keyboard.type=keyboard \
-  --teleop_keyboard.id=sourccey_keyboard \
   --fps=30 \
   --display_data=true
 ```

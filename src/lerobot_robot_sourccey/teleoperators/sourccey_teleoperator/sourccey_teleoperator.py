@@ -3,7 +3,7 @@ import logging
 import time
 from typing import Any
 
-from lerobot.teleoperators.keyboard import KeyboardTeleop, KeyboardTeleopConfig
+from ..keyboard import SourcceyKeyboard, SourcceyKeyboardConfig
 from lerobot.teleoperators.teleoperator import Teleoperator
 
 from ..bi_sourccey_leader.bi_sourccey_leader import BiSourcceyLeader
@@ -29,13 +29,22 @@ class SourcceyTeleoperator(Teleoperator):
                 left_arm_port=config.left_arm_port,
                 right_arm_port=config.right_arm_port,
                 motor_retries=config.motor_retries,
+                allow_partial_connection=config.allow_partial_connection,
             )
         )
         self.keyboard = (
-            KeyboardTeleop(KeyboardTeleopConfig(id=f"{config.id}_keyboard" if config.id else None))
+            SourcceyKeyboard(SourcceyKeyboardConfig(
+                id=f"{config.id}_keyboard" if config.id else None,
+                input_state_path=config.input_state_path,
+                input_state_timeout_s=config.input_state_timeout_s,
+            ))
             if config.enable_keyboard
             else None
         )
+        self._session_connected = False
+        self._robot: Any = None
+        self._events: dict[str, bool] | None = None
+        self._pressed: set[str] = set()
         self.speed_index = config.initial_speed_index
         self._previous_keys: set[str] = set()
         self._untorque_left = False
@@ -62,29 +71,41 @@ class SourcceyTeleoperator(Teleoperator):
     @property
     def is_connected(self) -> bool:
         keyboard_connected = self.keyboard is None or self.keyboard.is_connected
-        return self.leader.is_connected and keyboard_connected
+        return self._session_connected and self.leader.is_connected and (keyboard_connected or self.config.allow_keyboard_connection_failure)
 
     @property
     def is_calibrated(self) -> bool:
         return self.leader.is_calibrated
 
     def connect(self, calibrate: bool = True) -> None:
-        self.leader.connect(calibrate)
-        if self.keyboard is not None:
-            try:
-                self.keyboard.connect()
-            except Exception:
-                self.leader.disconnect()
-                raise
+        if self._session_connected:
+            raise RuntimeError("Sourccey teleoperator session is already connected")
+        try:
+            self.leader.connect(calibrate)
+            if self.keyboard is not None:
+                try:
+                    self.keyboard.connect()
+                    if not self.keyboard.is_connected:
+                        raise ConnectionError("Keyboard input is unavailable")
+                except Exception as exc:
+                    self.keyboard.disconnect()
+                    if not self.config.allow_keyboard_connection_failure:
+                        raise
+                    logger.warning("Keyboard unavailable (%s); continuing without keyboard input", exc)
+            self._session_connected = True
+        except BaseException:
+            self.disconnect()
+            raise
 
     def disconnect(self) -> None:
+        self._session_connected = False
         errors: list[Exception] = []
-        if self.keyboard is not None and self.keyboard.is_connected:
+        if self.keyboard is not None:
             try:
                 self.keyboard.disconnect()
             except Exception as exc:
                 errors.append(exc)
-        if self.leader.is_connected:
+        if self.leader is not None:
             try:
                 self.leader.disconnect()
             except Exception as exc:
@@ -104,9 +125,33 @@ class SourcceyTeleoperator(Teleoperator):
     def get_action(self) -> dict[str, float | bool]:
         action: dict[str, float | bool] = dict(self.leader.get_action())
         pressed = self._pressed_keys()
-        action.update(self._base_action(pressed))
+        self._pressed = pressed
+        edges = self.keyboard.pop_key_down_edges() if self.keyboard is not None and self.keyboard.is_connected else []
+        for key in edges:
+            if self._events is not None and key in ("arrowright", "arrowleft", "escape"):
+                self._events["exit_early"] = True
+                if key == "arrowleft":
+                    self._events["rerecord_episode"] = True
+                elif key == "escape":
+                    self._events["stop_recording"] = True
+            elif self._robot is not None:
+                self._robot.on_key_down(key)
+        if self._robot is None:
+            action.update(self._base_action(pressed))
         self._previous_keys = pressed
         return action
+
+    def bind_robot(self, robot: Any, events: dict[str, bool] | None = None) -> None:
+        """Use the client's observation-aware base/lift mapping in package runners."""
+        if not callable(getattr(robot, "_from_keyboard_to_base_action", None)):
+            raise ValueError("Sourccey controls require a robot with keyboard base/lift mapping")
+        self._robot = robot
+        self._events = events
+
+    def process_action(self, action: dict, observation: dict) -> dict:
+        if self._robot is None:
+            return action
+        return {**action, **self._robot._from_keyboard_to_base_action(self._pressed, observation.get("z.pos"))}
 
     def send_feedback(self, feedback: dict[str, Any]) -> None:
         self.leader.send_feedback(feedback)

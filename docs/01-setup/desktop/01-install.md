@@ -46,7 +46,7 @@ uv pip install -e "../packages/lerobot-robot-sourccey[record,dev]"
 Verify plugin discovery:
 
 ```bash
-uv run --no-sync lerobot-teleoperate \
+uv run --no-sync sourccey-teleoperate \
   --robot.type=sourccey_client \
   --teleop.type=sourccey_teleoperator \
   --help

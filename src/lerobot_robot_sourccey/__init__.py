@@ -1,5 +1,8 @@
 """Sourccey devices registered through LeRobot's third-party plugin loader."""
 
+from .cameras import SourcceyOpenCVCamera, SourcceyOpenCVCameraConfig
+from .teleoperators.keyboard import SourcceyKeyboard, SourcceyKeyboardConfig
+
 from .robots.sourccey.config_sourccey import SourcceyClientConfig, SourcceyConfig
 from .robots.sourccey.sourccey import Sourccey
 from .robots.sourccey.sourccey_client import SourcceyClient
@@ -13,6 +16,10 @@ from .teleoperators.sourccey_leader.sourccey_leader import SourcceyLeader
 from .teleoperators.sourccey_teleoperator import SourcceyTeleoperator, SourcceyTeleoperatorConfig
 
 __all__ = [
+    "SourcceyOpenCVCamera",
+    "SourcceyOpenCVCameraConfig",
+    "SourcceyKeyboard",
+    "SourcceyKeyboardConfig",
     "BiSourcceyLeader",
     "BiSourcceyLeaderConfig",
     "Sourccey",

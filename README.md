@@ -127,3 +127,41 @@ Both counts must be non-negative integers. Zero requests one attempt with no
 retry. A direct bus call with `num_retry=0` (or another explicit count) overrides
 the configured budget. Composite configs pass the policy to both arms. Wheel,
 lift, camera and network retry behavior is unchanged.
+
+## Camera recovery and desktop controls
+
+Sourccey camera defaults use the registered `sourccey_opencv` camera type.
+It retains LeRobot's OpenCV capture settings and frame processing, with a
+package-owned reconnect worker. After two consecutive failures it retries
+every 50 ms for two seconds, then every 500 ms until recovery or shutdown.
+Custom camera dictionaries must use `type: sourccey_opencv` to enable this behavior;
+`type: opencv` keeps upstream behavior. Initial connection failures still raise.
+
+Use `sourccey-teleoperate` and `sourccey-record` with
+`--teleop.type=sourccey_teleoperator`. These commands reuse LeRobot's control
+loops, processors and dataset APIs. They add Sourccey session handling and
+observation-aware base/lift controls without modifying upstream globals.
+
+- `--teleop.allow_partial_connection=true` continues with packaged default
+  actions for unavailable leader arms, while connecting each remaining arm.
+  Set it to `false` to require both leaders.
+- `--teleop.allow_keyboard_connection_failure=true` continues with zero
+  keyboard movement if local keyboard capture fails. Set it to `false` to
+  require keyboard input, or use `--teleop.enable_keyboard=false` to disable it.
+- `--teleop.input_state_path=C:/path/keys.json` reads the desktop's JSON list
+  of held keys, such as `["w", "r"]`, without requiring a local keyboard listener.
+  Missing or malformed files release all keys. Desktop writers should replace
+  the file atomically and write `[]` when focus is lost or the session ends.
+- An optional `--teleop.input_state_timeout_s=1.0` releases stale input when
+  the writer refreshes the snapshot while keys are held. The timeout is disabled
+  by default for writers that update only on key transitions.
+
+Right Arrow ends an episode, Left Arrow discards and re-records it, and Escape
+stops recording. Movement, speed and untorque keys remain independent of those
+episode controls. The lift target initializes from the latest valid observation.
+Robot/network connection failures still stop the command.
+
+The desktop application launches these package commands. Install this checkout
+with `uv pip install -e "../packages/lerobot-robot-sourccey[desktop]"` in the
+LeRobot environment and use `uv run --no-sync` while the release pin still points
+to the previously published package. Publishing and updating pins is a separate step.

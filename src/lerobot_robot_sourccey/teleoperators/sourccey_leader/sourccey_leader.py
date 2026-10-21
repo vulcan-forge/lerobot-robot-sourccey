@@ -23,7 +23,7 @@ from lerobot.motors.feetech import (
     OperatingMode,
 )
 from lerobot.teleoperators.teleoperator import Teleoperator
-from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot.utils.errors import DeviceAlreadyConnectedError
 from lerobot_robot_sourccey.motors.retry import SourcceyMotorsBus
 
 from .config_sourccey_leader import SourcceyLeaderConfig
@@ -138,9 +138,11 @@ class SourcceyLeader(Teleoperator):
 
     def disconnect(self) -> None:
         if not self.is_connected:
-            DeviceNotConnectedError(f"{self} is not connected.")
+            if not self.bus.is_connected:
+                return
 
         self.bus.disconnect()
+        self.leader_connected = False
         logger.info(f"{self} disconnected.")
 
     @property

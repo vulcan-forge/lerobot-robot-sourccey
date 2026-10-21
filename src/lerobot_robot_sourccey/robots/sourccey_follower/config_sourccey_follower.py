@@ -16,7 +16,7 @@
 from dataclasses import dataclass, field
 
 from lerobot.cameras.configs import CameraConfig
-from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
+from lerobot_robot_sourccey.cameras import SourcceyOpenCVCameraConfig
 from lerobot.motors.motors_bus import Motor
 from lerobot.robots.config import RobotConfig
 from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
@@ -34,7 +34,7 @@ def sourccey_motor_models() -> dict[str, str]:
 
 def sourccey_cameras_config() -> dict[str, CameraConfig]:
     return {
-        "wrist": OpenCVCameraConfig(
+        "wrist": SourcceyOpenCVCameraConfig(
             index_or_path="/dev/video0", fps=30, width=320, height=240
         ),
     }

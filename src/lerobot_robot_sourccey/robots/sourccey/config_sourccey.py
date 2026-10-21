@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 
 from lerobot.cameras.configs import CameraConfig
-from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
+from lerobot_robot_sourccey.cameras import SourcceyOpenCVCameraConfig
 from lerobot.robots.config import RobotConfig
 from lerobot_robot_sourccey.motors.dc_motors_controller import DCMotor, MotorNormMode
 from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
@@ -24,24 +24,8 @@ from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
 from .modules.slam.config import SlamInputConfig
 
 
-def _opencv_camera(index_or_path: str) -> OpenCVCameraConfig:
-    """Create a camera config on both stock LeRobot and the Vulcan camera fork."""
-    values = {
-        "index_or_path": index_or_path,
-        "fps": 30,
-        "width": 320,
-        "height": 240,
-    }
-    reconnect_values = {
-        "auto_reconnect": True,
-        "max_consecutive_read_failures": 2,
-        "fast_reconnect_interval_s": 0.05,
-        "fast_reconnect_window_s": 2.0,
-        "reconnect_interval_s": 0.5,
-    }
-    supported = {item.name for item in fields(OpenCVCameraConfig)}
-    values.update({key: value for key, value in reconnect_values.items() if key in supported})
-    return OpenCVCameraConfig(**values)
+def _opencv_camera(index_or_path: str) -> SourcceyOpenCVCameraConfig:
+    return SourcceyOpenCVCameraConfig(index_or_path=index_or_path, fps=30, width=320, height=240)
 
 
 def sourccey_cameras_config() -> dict[str, CameraConfig]:

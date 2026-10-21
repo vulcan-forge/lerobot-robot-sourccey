@@ -66,6 +66,8 @@ all = [
 ]
 
 [project.scripts]
+sourccey-record = "lerobot_robot_sourccey.record:main"
+sourccey-teleoperate = "lerobot_robot_sourccey.teleoperate:main"
 sourccey-setup = "lerobot_robot_sourccey.setup:main"
 sourccey-host = "lerobot_robot_sourccey.robots.sourccey.sourccey_host:main"
 sourccey-calibrate = "lerobot_robot_sourccey.robots.sourccey.calibrate:main"

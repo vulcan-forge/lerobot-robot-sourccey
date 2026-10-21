@@ -55,6 +55,7 @@ class BiSourcceyLeader(Teleoperator):
 
         self.left_arm = SourcceyLeader(left_arm_config)
         self.right_arm = SourcceyLeader(right_arm_config)
+        self._session_connected = False
 
     @cached_property
     def action_features(self) -> dict[str, type]:
@@ -68,15 +69,37 @@ class BiSourcceyLeader(Teleoperator):
 
     @property
     def is_connected(self) -> bool:
-        return self.left_arm.is_connected and self.right_arm.is_connected
+        return self._session_connected and (self.config.allow_partial_connection or (self.left_arm.is_connected and self.right_arm.is_connected))
 
     def connect(self, calibrate: bool = True) -> None:
-        self.left_arm.connect(calibrate)
-        self.right_arm.connect(calibrate)
+        if self._session_connected:
+            raise RuntimeError("Sourccey leader session is already connected")
+        try:
+            for name, arm in (("left", self.left_arm), ("right", self.right_arm)):
+                try:
+                    arm.connect(calibrate)
+                except Exception as exc:
+                    if arm.bus.is_connected:
+                        arm.disconnect()
+                    if not self.config.allow_partial_connection:
+                        raise
+                    logger.warning("%s leader unavailable (%s); continuing with default actions", name, exc)
+            self._session_connected = True
+        except BaseException:
+            self.disconnect()
+            raise
 
     def disconnect(self) -> None:
-        self.left_arm.disconnect()
-        self.right_arm.disconnect()
+        self._session_connected = False
+        errors: list[Exception] = []
+        for arm in (self.left_arm, self.right_arm):
+            if arm.bus.is_connected:
+                try:
+                    arm.disconnect()
+                except Exception as exc:
+                    errors.append(exc)
+        if errors:
+            raise RuntimeError("Failed to disconnect Sourccey leader arms") from errors[0]
 
     @property
     def is_calibrated(self) -> bool:

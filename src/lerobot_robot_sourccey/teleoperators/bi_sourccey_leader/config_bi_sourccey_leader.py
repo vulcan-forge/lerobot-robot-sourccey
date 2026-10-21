@@ -25,5 +25,8 @@ class BiSourcceyLeaderConfig(TeleoperatorConfig):
     left_arm_port: str
     right_arm_port: str
 
+    # Missing leaders keep their packaged default actions unless strict mode is selected.
+    allow_partial_connection: bool = False
+
     motor_retries: MotorRetryPolicy = field(default_factory=MotorRetryPolicy)
 

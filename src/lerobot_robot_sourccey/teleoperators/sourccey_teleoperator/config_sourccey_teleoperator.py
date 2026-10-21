@@ -27,6 +27,9 @@ class SourcceyTeleoperatorConfig(TeleoperatorConfig):
     left_arm_port: str
     right_arm_port: str
 
+    # Missing leaders keep their packaged default actions unless strict mode is selected.
+    allow_partial_connection: bool = True
+
     motor_retries: MotorRetryPolicy = field(default_factory=MotorRetryPolicy)
     teleop_keys: dict[str, str] = field(default_factory=default_teleop_keys)
     speed_levels: tuple[float, ...] = (0.8, 0.9, 1.0)
@@ -36,6 +39,9 @@ class SourcceyTeleoperatorConfig(TeleoperatorConfig):
     initial_z_position: float = 100.0
     z_position_units_per_s: float = 25.0
     enable_keyboard: bool = True
+    allow_keyboard_connection_failure: bool = True
+    input_state_path: str | None = None
+    input_state_timeout_s: float | None = None
 
     def __post_init__(self) -> None:
         if not self.speed_levels:
