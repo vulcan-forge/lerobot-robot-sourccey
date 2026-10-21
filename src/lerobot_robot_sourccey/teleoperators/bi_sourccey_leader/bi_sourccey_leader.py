@@ -42,6 +42,7 @@ class BiSourcceyLeader(Teleoperator):
             calibration_dir=config.calibration_dir,
             port=config.left_arm_port,
             orientation="left",
+            motor_retries=config.motor_retries,
         )
 
         right_arm_config = SourcceyLeaderConfig(
@@ -49,6 +50,7 @@ class BiSourcceyLeader(Teleoperator):
             calibration_dir=config.calibration_dir,
             port=config.right_arm_port,
             orientation="right",
+            motor_retries=config.motor_retries,
         )
 
         self.left_arm = SourcceyLeader(left_arm_config)

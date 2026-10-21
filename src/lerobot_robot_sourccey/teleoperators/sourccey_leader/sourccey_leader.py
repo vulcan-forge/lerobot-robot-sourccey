@@ -13,20 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import json
+import logging
 import time
 from pathlib import Path
 
-from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 from lerobot.motors import Motor, MotorCalibration, MotorNormMode
 from lerobot.motors.feetech import (
-    FeetechMotorsBus,
     OperatingMode,
 )
-
 from lerobot.teleoperators.teleoperator import Teleoperator
-from .config_sourccey_leader import  SourcceyLeaderConfig
+from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot_robot_sourccey.motors.retry import SourcceyMotorsBus
+
+from .config_sourccey_leader import SourcceyLeaderConfig
 from .sourccey_leader_calibrator import SourcceyLeaderCalibrator
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class SourcceyLeader(Teleoperator):
         if self.config.orientation == "right":
             motor_ids = [7, 8, 9, 10, 11, 12]
 
-        self.bus = FeetechMotorsBus(
+        self.bus = SourcceyMotorsBus(
             port=self.config.port,
             motors={
                 "shoulder_pan": Motor(motor_ids[0], "sts3215", MotorNormMode.RANGE_M100_100),
@@ -59,6 +59,7 @@ class SourcceyLeader(Teleoperator):
                 "gripper": Motor(motor_ids[5], "sts3215", MotorNormMode.RANGE_0_100),
             },
             calibration=self.calibration,
+            retry_policy=config.motor_retries,
         )
 
         # Connection

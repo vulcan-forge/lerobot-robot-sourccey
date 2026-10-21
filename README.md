@@ -103,3 +103,27 @@ and import-package name.
 ## License
 
 Apache-2.0. Individual source files retain their existing copyright notices.
+
+## Arm motor retries
+
+Sourccey arm buses use five additional transport attempts for reads and writes
+by default. These defaults belong to the package; upstream LeRobot motor buses
+keep their own defaults. No extra outer retry loop is added.
+
+Leader, follower, bimanual leader, composite teleoperator and robot configs expose
+`motor_retries.read` and `motor_retries.write`. For example:
+
+```python
+from lerobot_robot_sourccey import SourcceyFollowerConfig
+from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
+
+config = SourcceyFollowerConfig(
+    port="/dev/robotLeftArm",
+    motor_retries=MotorRetryPolicy(read=2, write=5),
+)
+```
+
+Both counts must be non-negative integers. Zero requests one attempt with no
+retry. A direct bus call with `num_retry=0` (or another explicit count) overrides
+the configured budget. Composite configs pass the policy to both arms. Wheel,
+lift, camera and network retry behavior is unchanged.

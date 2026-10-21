@@ -19,6 +19,7 @@ from lerobot.cameras.configs import CameraConfig
 from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
 from lerobot.motors.motors_bus import Motor
 from lerobot.robots.config import RobotConfig
+from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
 
 
 def sourccey_motor_models() -> dict[str, str]:
@@ -44,6 +45,8 @@ class SourcceyFollowerConfig(RobotConfig):
     # Port to connect to the arm
     port: str
     orientation: str = "left"
+
+    motor_retries: MotorRetryPolicy = field(default_factory=MotorRetryPolicy)
 
     # The models of the motors to use for the follower arms.
     motor_models: dict[str, str] = field(default_factory=sourccey_motor_models)

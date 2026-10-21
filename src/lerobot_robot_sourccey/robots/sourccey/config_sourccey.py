@@ -17,9 +17,10 @@ from dataclasses import dataclass, field, fields
 
 from lerobot.cameras.configs import CameraConfig
 from lerobot.cameras.opencv.configuration_opencv import OpenCVCameraConfig
-from lerobot_robot_sourccey.motors.dc_motors_controller import DCMotor, MotorNormMode
-
 from lerobot.robots.config import RobotConfig
+from lerobot_robot_sourccey.motors.dc_motors_controller import DCMotor, MotorNormMode
+from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
+
 from .modules.slam.config import SlamInputConfig
 
 
@@ -85,6 +86,8 @@ class SourcceyConfig(RobotConfig):
 
     left_arm_port: str = "/dev/robotLeftArm"
     right_arm_port: str = "/dev/robotRightArm"
+
+    motor_retries: MotorRetryPolicy = field(default_factory=MotorRetryPolicy)
 
     left_arm_motor_models: dict[str, str] = field(default_factory=sourccey_motor_models)
     right_arm_motor_models: dict[str, str] = field(default_factory=sourccey_motor_models)

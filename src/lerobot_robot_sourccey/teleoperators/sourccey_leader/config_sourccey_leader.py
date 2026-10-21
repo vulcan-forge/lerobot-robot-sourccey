@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from lerobot.teleoperators.config import TeleoperatorConfig
+from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
 
 
 @TeleoperatorConfig.register_subclass("sourccey_leader")
@@ -24,4 +25,6 @@ class SourcceyLeaderConfig(TeleoperatorConfig):
     # Port to connect to the arm
     port: str
     orientation: str
+
+    motor_retries: MotorRetryPolicy = field(default_factory=MotorRetryPolicy)
 

@@ -20,6 +20,8 @@ from typing import Any, Dict
 
 from lerobot.motors.motors_bus import MotorCalibration
 
+from lerobot_robot_sourccey.motors.homing import set_position_homings
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,8 @@ class SourcceyLeaderCalibrator:
     def _initialize_calibration(self, reverse: bool = False) -> Dict[str, int]:
         """Initialize the calibration of the robot."""
 
-        shoulder_pan_homing_offset = self.teleop.bus.set_position_homings(
+        shoulder_pan_homing_offset = set_position_homings(
+            self.teleop.bus,
             {
                 "shoulder_pan": 2568 if reverse else 1544,
                 "shoulder_lift": 379 if reverse else 3636,

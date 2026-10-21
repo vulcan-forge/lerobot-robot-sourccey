@@ -13,21 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import cached_property
-import time
-from typing import Any
 import logging
+import time
+from functools import cached_property
+from typing import Any
 
 import numpy as np
+
 from lerobot.cameras.utils import make_cameras_from_configs
-from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
-from lerobot.motors.feetech.feetech import FeetechMotorsBus, OperatingMode
+from lerobot.motors.feetech.feetech import OperatingMode
 from lerobot.motors.motors_bus import Motor, MotorNormMode
 from lerobot.robots.robot import Robot
-from lerobot_robot_sourccey.robots.sourccey_follower.sourccey_follower_calibrator import SourcceyFollowerCalibrator
-from lerobot_robot_sourccey.robots.sourccey_follower.config_sourccey_follower import SourcceyFollowerConfig
-from lerobot_robot_sourccey.robots.sourccey_follower.sourccey_follower_safety import SourcceyFollowerSafety
 from lerobot.robots.utils import ensure_safe_goal_position
+from lerobot.utils.errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from lerobot_robot_sourccey.motors.retry import SourcceyMotorsBus
+from lerobot_robot_sourccey.robots.sourccey_follower.config_sourccey_follower import (
+    SourcceyFollowerConfig,
+)
+from lerobot_robot_sourccey.robots.sourccey_follower.sourccey_follower_calibrator import (
+    SourcceyFollowerCalibrator,
+)
+from lerobot_robot_sourccey.robots.sourccey_follower.sourccey_follower_safety import (
+    SourcceyFollowerSafety,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +52,7 @@ class SourcceyFollower(Robot):
         if self.config.orientation == "right":
             motor_ids = [7, 8, 9, 10, 11, 12]
 
-        self.bus = FeetechMotorsBus(
+        self.bus = SourcceyMotorsBus(
             port=self.config.port,
             motors={
                 "shoulder_pan": Motor(motor_ids[0], config.motor_models["shoulder_pan"], norm_mode_body),
@@ -55,6 +63,7 @@ class SourcceyFollower(Robot):
                 "gripper": Motor(motor_ids[5], config.motor_models["gripper"], MotorNormMode.RANGE_0_100),
             },
             calibration=self.calibration,
+            retry_policy=config.motor_retries,
         )
         self.cameras = make_cameras_from_configs(config.cameras)
 

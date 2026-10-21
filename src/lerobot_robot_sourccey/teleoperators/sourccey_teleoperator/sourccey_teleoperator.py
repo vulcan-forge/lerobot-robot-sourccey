@@ -28,6 +28,7 @@ class SourcceyTeleoperator(Teleoperator):
                 calibration_dir=config.calibration_dir,
                 left_arm_port=config.left_arm_port,
                 right_arm_port=config.right_arm_port,
+                motor_retries=config.motor_retries,
             )
         )
         self.keyboard = (

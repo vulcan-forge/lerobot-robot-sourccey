@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 from lerobot.teleoperators.config import TeleoperatorConfig
+from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
 
 
 def default_teleop_keys() -> dict[str, str]:
@@ -25,6 +26,8 @@ def default_teleop_keys() -> dict[str, str]:
 class SourcceyTeleoperatorConfig(TeleoperatorConfig):
     left_arm_port: str
     right_arm_port: str
+
+    motor_retries: MotorRetryPolicy = field(default_factory=MotorRetryPolicy)
     teleop_keys: dict[str, str] = field(default_factory=default_teleop_keys)
     speed_levels: tuple[float, ...] = (0.8, 0.9, 1.0)
     initial_speed_index: int = 1

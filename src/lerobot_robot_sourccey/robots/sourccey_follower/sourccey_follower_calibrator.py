@@ -22,6 +22,8 @@ import logging
 from lerobot.motors.feetech.feetech import OperatingMode
 from lerobot.motors.motors_bus import MotorCalibration
 
+from lerobot_robot_sourccey.motors.homing import set_position_homings
+
 logger = logging.getLogger(__name__)
 
 class SourcceyFollowerCalibrator:
@@ -169,7 +171,9 @@ class SourcceyFollowerCalibrator:
         """Initialize the calibration of the robot."""
         # Set all motors to half turn homings except shoulder_lift
         homing_offsets = self.robot.bus.set_half_turn_homings()
-        shoulder_lift_homing_offset = self.robot.bus.set_position_homings({"shoulder_lift": 296 if reverse else 3800})
+        shoulder_lift_homing_offset = set_position_homings(
+            self.robot.bus, {"shoulder_lift": 296 if reverse else 3800}
+        )
         homing_offsets["shoulder_lift"] = shoulder_lift_homing_offset["shoulder_lift"]
         return homing_offsets
 
