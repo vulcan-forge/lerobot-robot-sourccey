@@ -1,0 +1,30 @@
+# Sourccey hardware checks
+
+Hardware diagnostics ship in `lerobot-robot-sourccey`. The complete guide is in
+the package's [Hardware checks](../01-setup/robot/06-hardware-checks.md)
+documentation.
+
+From the controller computer, with `sourccey-host` running on the robot:
+
+```bash
+uv run --no-sync sourccey-check-eye-cameras --remote-ip 192.168.1.237 --skip-bottom
+uv run --no-sync sourccey-check-arm-cameras --remote-ip 192.168.1.237
+uv run --no-sync sourccey-check-motors --remote-ip 192.168.1.237
+```
+
+On the robot computer, with the host stopped:
+
+```bash
+uv run --no-sync sourccey-check-eye-cameras-local --include-bottom
+uv run --no-sync sourccey-check-arm-cameras-local
+uv run --no-sync sourccey-check-bottom-camera --verify-names
+uv run --no-sync sourccey-check-motors
+uv run --no-sync sourccey-check-lidar-imu
+```
+
+Install the package's `robot` profile on the robot and `desktop` profile on the
+controller. During local development, install the sibling checkout editably in
+the LeRobot environment and keep `--no-sync` until the package release pin is updated.
+
+All commands return a nonzero exit code when a selected check fails. Motor motion
+requires `--wiggle` or `--z-stroke` and their existing interactive confirmation.

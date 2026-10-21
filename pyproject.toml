@@ -32,6 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+training = ["lerobot[training]>=0.6.2,<0.7", "pyyaml>=6,<7"]
 rollout = ["lerobot[core-scripts]>=0.6.2,<0.7"]
 record = [
     "lerobot[core-scripts]>=0.6,<0.7",
@@ -61,10 +62,12 @@ desktop = [
     "lerobot-robot-sourccey[record,dataset,rollout]",
 ]
 all = [
-    "lerobot-robot-sourccey[robot,desktop,dev]",
+    "lerobot-robot-sourccey[robot,desktop,training,dev]",
 ]
 
 [project.scripts]
+sourccey-train-retry = "lerobot_robot_sourccey.train_retry:main"
+lerobot-train-retry = "lerobot_robot_sourccey.train_retry:main"
 sourccey-rollout = "lerobot_robot_sourccey.rollout:main"
 sourccey-check-eye-cameras = "lerobot_robot_sourccey.diagnostics.eye_cameras:main"
 sourccey-check-arm-cameras = "lerobot_robot_sourccey.diagnostics.arm_cameras:main"

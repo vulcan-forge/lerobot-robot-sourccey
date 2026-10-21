@@ -15,3 +15,8 @@ Return to the [package overview](../README.md).
 
 [Policy rollout and desktop shutdown](rollout.md) describes package-owned stop
 control, missing-arm policy inputs, and calibration recovery.
+
+[LeRobot workspace quickstart](lerobot-workspace/README.md) provides an ordered
+controller-and-robot setup, teleoperation, recording, replay, training, and
+rollout walkthrough, plus hardware checks and troubleshooting. Run its
+commands from the LeRobot workspace as described in the guide.
