@@ -32,5 +32,13 @@ uv run sourccey-calibrate --arm right --full-reset --yes
 Use `--left-arm-port`, `--right-arm-port`, `--id`, or
 `--calibration-dir` to override their configured values.
 
+Right-arm calibration automatically derives a safe encoder frame from that
+robot's own measured offset and calibrated range. No shared numeric offset is
+used. After installing this fix on an already calibrated robot, run right-arm
+calibration once to save the corrected frame. See the
+[right shoulder encoder-seam note](../../lerobot-workspace/right-shoulder-encoder-seam.md).
+The protection is enabled by default and requires no additional command flag or
+numeric offset.
+
 Next, [start the robot host](05-host.md), or return to the [robot setup
 index](README.md).

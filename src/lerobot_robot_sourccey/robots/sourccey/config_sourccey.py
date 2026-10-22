@@ -91,6 +91,7 @@ class SourcceyConfig(RobotConfig):
     left_arm_max_relative_target: int | None = None
     left_arm_use_degrees: bool = False
     right_arm_disable_torque_on_disconnect: bool = True
+    right_arm_protect_shoulder_encoder_seam: bool = True
     right_arm_max_relative_target: int | None = None
     right_arm_use_degrees: bool = False
 

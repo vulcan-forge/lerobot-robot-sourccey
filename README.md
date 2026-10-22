@@ -61,6 +61,7 @@ python examples/sdk_drive_base.py --ip 192.168.1.50 --x 0.2 --duration 1.0
 | [Control systems](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/02-control-systems/README.md) | Teleoperate, record, replay, and deploy policies |
 | [SDK](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/03-sdk/README.md) | Use the Python API, movement helpers, cameras, and 2D LiDAR tools |
 | [AI and datasets](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/04-ai/README.md) | Manage datasets and train policies |
+| [Right shoulder encoder-seam incident](docs/lerobot-workspace/right-shoulder-encoder-seam.md) | Understand the startup-only shoulder flip, its automatic calibration fix, and evidence to save if it returns |
 
 For the normal operating path, complete
 [Setup](https://github.com/vulcan-forge/lerobot-robot-sourccey/blob/main/docs/01-setup/README.md),

@@ -14,17 +14,21 @@
 # limitations under the License.
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any, Dict
 
-import logging
 from lerobot.motors.feetech.feetech import OperatingMode
 from lerobot.motors.motors_bus import MotorCalibration
 
 from lerobot_robot_sourccey.motors.homing import set_position_homings
+from lerobot_robot_sourccey.robots.sourccey_follower.shoulder_calibration_frame import (
+    center_right_shoulder_frame,
+)
 
 logger = logging.getLogger(__name__)
+
 
 class SourcceyFollowerCalibrator:
     """Handles calibration operations for Sourccey robots."""
@@ -34,6 +38,13 @@ class SourcceyFollowerCalibrator:
 
     def __init__(self, robot):
         self.robot = robot
+        self.protect_shoulder_encoder_seam = self.robot.config.orientation == "right" and getattr(
+            self.robot.config, "protect_right_shoulder_encoder_seam", True
+        )
+        if self.protect_shoulder_encoder_seam:
+            shoulder = self.robot.bus.motors.get("shoulder_lift")
+            if shoulder is None or shoulder.id != 8 or shoulder.model != "sts3250":
+                raise ValueError("Right shoulder frame selection requires the STS3250 motor ID 8")
 
     def default_calibrate(self, reverse: bool = False) -> Dict[str, MotorCalibration]:
         """Perform default calibration."""
@@ -47,11 +58,13 @@ class SourcceyFollowerCalibrator:
             min_ranges[motor] = default_calibration[motor]["range_min"]
             max_ranges[motor] = default_calibration[motor]["range_max"]
 
-        self.robot.calibration = self._create_calibration_dict(
-            homing_offsets,
-            min_ranges,
-            max_ranges,
-            gripper_range_extension=self.DEFAULT_CALIBRATION_GRIPPER_RANGE_EXTENSION,
+        self.robot.calibration = self._finalize_calibration(
+            self._create_calibration_dict(
+                homing_offsets,
+                min_ranges,
+                max_ranges,
+                gripper_range_extension=self.DEFAULT_CALIBRATION_GRIPPER_RANGE_EXTENSION,
+            )
         )
         self.robot.bus.write_calibration(self.robot.calibration)
         self._save_calibration()
@@ -61,7 +74,11 @@ class SourcceyFollowerCalibrator:
     def manual_calibrate(self) -> Dict[str, MotorCalibration]:
         """Perform manual calibration with user interaction."""
         if self.robot.calibration:
+            if self.protect_shoulder_encoder_seam:
+                self.robot.bus.disable_torque()
+            self.robot.calibration = self._finalize_calibration(self.robot.calibration)
             self.robot.bus.write_calibration(self.robot.calibration)
+            self._save_calibration()
             return self.robot.calibration
 
         logger.info(f"\nRunning calibration of robot {self.robot.id}")
@@ -69,7 +86,7 @@ class SourcceyFollowerCalibrator:
         for motor in self.robot.bus.motors:
             self.robot.bus.write("Operating_Mode", motor, OperatingMode.POSITION.value)
 
-        input(f"Move robot to the middle of its range of motion and press ENTER....")
+        input("Move robot to the middle of its range of motion and press ENTER....")
         homing_offsets = self.robot.bus.set_half_turn_homings()
 
         full_turn_motor = "wrist_roll"
@@ -82,7 +99,9 @@ class SourcceyFollowerCalibrator:
         range_mins[full_turn_motor] = 0
         range_maxes[full_turn_motor] = 4095
 
-        self.robot.calibration = self._create_calibration_dict(homing_offsets, range_mins, range_maxes)
+        self.robot.calibration = self._finalize_calibration(
+            self._create_calibration_dict(homing_offsets, range_mins, range_maxes)
+        )
         self.robot.bus.write_calibration(self.robot.calibration)
         self._save_calibration()
         print("Calibration saved to", self.robot.calibration_fpath)
@@ -127,11 +146,13 @@ class SourcceyFollowerCalibrator:
         self.robot.bus.disable_torque()
 
         # Step 4: Create calibration dictionary
-        self.robot.calibration = self._create_calibration_dict(
-            homing_offsets,
-            detected_ranges["min"],
-            detected_ranges["max"],
-            gripper_range_extension=self.GRIPPER_RANGE_EXTENSION,
+        self.robot.calibration = self._finalize_calibration(
+            self._create_calibration_dict(
+                homing_offsets,
+                detected_ranges["min"],
+                detected_ranges["max"],
+                gripper_range_extension=self.GRIPPER_RANGE_EXTENSION,
+            )
         )
 
         # Step 5: Write calibration to motors and save
@@ -167,8 +188,33 @@ class SourcceyFollowerCalibrator:
             )
         return calibration
 
+    def _finalize_calibration(
+        self, calibration: Dict[str, MotorCalibration]
+    ) -> Dict[str, MotorCalibration]:
+        """Apply default post-calibration protections before writing or saving."""
+        if not self.protect_shoulder_encoder_seam:
+            return calibration
+
+        finalized = calibration.copy()
+        finalized["shoulder_lift"] = center_right_shoulder_frame(
+            finalized["shoulder_lift"]
+        )
+        shoulder = finalized["shoulder_lift"]
+        seam_clearance = min(shoulder.range_min, 4095 - shoulder.range_max)
+        logger.info(
+            "Selected right shoulder frame: homing_offset=%d, range=%d..%d, seam_clearance=%d ticks",
+            shoulder.homing_offset,
+            shoulder.range_min,
+            shoulder.range_max,
+            seam_clearance,
+        )
+        return finalized
+
     def _initialize_calibration(self, reverse: bool = False) -> Dict[str, int]:
         """Initialize the calibration of the robot."""
+        # Changing homing references while energized can command sudden motion.
+        # Failure to release torque must abort before any calibration write.
+        self.robot.bus.disable_torque()
         # Set all motors to half turn homings except shoulder_lift
         homing_offsets = self.robot.bus.set_half_turn_homings()
         shoulder_lift_homing_offset = set_position_homings(

@@ -94,6 +94,7 @@ class Sourccey(CalibrationRecoveryMixin, Robot):
             port=config.right_arm_port,
             orientation="right",
             disable_torque_on_disconnect=config.right_arm_disable_torque_on_disconnect,
+            protect_right_shoulder_encoder_seam=config.right_arm_protect_shoulder_encoder_seam,
             max_relative_target=config.right_arm_max_relative_target,
             use_degrees=config.right_arm_use_degrees,
             cameras={},

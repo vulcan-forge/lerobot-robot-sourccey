@@ -36,6 +36,9 @@ class PublicMotorsBus:
         self.calls.append(("half_turn",))
         return {name: 100 + i for i, name in enumerate(self.motors)}
 
+    def disable_torque(self):
+        self.calls.append(("disable_torque",))
+
 
 @pytest.mark.parametrize("model", ["sts3215", "sts3250"])
 @pytest.mark.parametrize(
@@ -140,11 +143,13 @@ def test_leader_uses_package_homing_with_unchanged_targets(reverse, expected):
 @pytest.mark.parametrize("reverse,expected", [(False, 296), (True, -296)])
 def test_follower_keeps_half_turn_homing_and_custom_shoulder_target(reverse, expected):
     bus = PublicMotorsBus({name: SimpleNamespace(id=i + 1, model="sts3215") for i, name in enumerate(JOINTS)})
-    calibrator = SourcceyFollowerCalibrator(SimpleNamespace(bus=bus))
+    robot = SimpleNamespace(bus=bus, config=SimpleNamespace(orientation="left"))
+    calibrator = SourcceyFollowerCalibrator(robot)
 
     offsets = calibrator._initialize_calibration(reverse)
 
     assert bus.calls == [
+        ("disable_torque",),
         ("half_turn",),
         ("reset", ["shoulder_lift"]),
         ("read", "Present_Position", ["shoulder_lift"], False),

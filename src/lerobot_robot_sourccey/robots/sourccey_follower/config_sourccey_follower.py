@@ -18,7 +18,6 @@ from lerobot_robot_sourccey.motors.models import sourccey_motor_models
 
 from lerobot.cameras.configs import CameraConfig
 from lerobot_robot_sourccey.cameras import SourcceyOpenCVCameraConfig
-from lerobot.motors.motors_bus import Motor
 from lerobot.robots.config import RobotConfig
 from lerobot_robot_sourccey.motors.retry import MotorRetryPolicy
 
@@ -44,6 +43,10 @@ class SourcceyFollowerConfig(RobotConfig):
     motor_models: dict[str, str] = field(default_factory=sourccey_motor_models)
 
     disable_torque_on_disconnect: bool = True
+
+    # Automatically move the right shoulder's encoder seam outside its
+    # calibrated travel before calibration is written and saved.
+    protect_right_shoulder_encoder_seam: bool = True
 
     # `max_relative_target` limits the magnitude of the relative positional target vector for safety purposes.
     # Set this to a positive scalar to have the same value for all motors, or a list that is the same length as

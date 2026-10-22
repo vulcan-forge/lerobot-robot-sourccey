@@ -61,6 +61,13 @@ Stop `sourccey-host` before direct device checks on the robot computer. The
 complete camera, motor, lift, LiDAR, IMU, and battery procedures are in the
 [Sourccey hardware checks](./hardware-checks.mdx).
 
+## Right shoulder suddenly flips near startup
+
+Stop inference and `sourccey-host`. If the right `shoulder_lift` started near a
+raw encoder rollover and then commanded a large, implausible movement, follow
+the [right shoulder encoder-seam diagnosis and fix](right-shoulder-encoder-seam.md).
+Preserve the calibration files and logs before recalibrating.
+
 ## A dataset will not train
 
 Confirm the dataset ID is identical in the record and train commands. For
