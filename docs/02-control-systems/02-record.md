@@ -8,12 +8,13 @@ uv run --no-sync lerobot-record \
   --robot.type=sourccey_client \
   --robot.id=sourccey \
   --robot.remote_ip=192.168.1.243 \
-  --teleop.type=bi_sourccey_leader \
-  --teleop.id=sourccey_leader \
-  --teleop.left_arm_port=COM5 \
-  --teleop.right_arm_port=COM6 \
-  --teleop_keyboard.type=keyboard \
-  --teleop_keyboard.id=sourccey_keyboard \
+  --teleop.type=composite \
+  --teleop.base.type=keyboard \
+  --teleop.arm.type=bi_sourccey_leader \
+  --teleop.arm.id=sourccey_leader \
+  --teleop.arm.left_arm_port=COM5 \
+  --teleop.arm.right_arm_port=COM6 \
+  --teleop.mapping.type=sourccey_keyboard \
   --dataset.repo_id=vulcan-studio/sourccey-demo-1 \
   --dataset.num_episodes=5 \
   --dataset.episode_time_s=300 \
@@ -29,8 +30,10 @@ and re-records it, and Escape stops recording. Keep
 `--dataset.push_to_hub=false` for a local dataset; set it to `true` when the
 finished dataset should be uploaded.
 
-The split keyboard path converts Q/E input into an absolute `z.pos` target
-using the latest robot observation.
+The keyboard mapping turns the lift keys into an absolute `z.pos` target that
+starts at the measured lift position, so recorded actions keep the same
+features as before. Movement keys take priority over recording shortcuts with
+the same key: on AZERTY, `Q` moves left instead of stopping the recording.
 
 Next, [replay an episode](03-replay.md), or return to the
 [control-systems index](README.md).

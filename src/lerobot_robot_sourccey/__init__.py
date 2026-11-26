@@ -10,6 +10,7 @@ from .teleoperators.bi_sourccey_leader.bi_sourccey_leader import BiSourcceyLeade
 from .teleoperators.bi_sourccey_leader.config_bi_sourccey_leader import BiSourcceyLeaderConfig
 from .teleoperators.sourccey_leader.config_sourccey_leader import SourcceyLeaderConfig
 from .teleoperators.sourccey_leader.sourccey_leader import SourcceyLeader
+from .teleoperators.keyboard_mapping import SourcceyKeyboardToBaseActionProcessorStep
 from .teleoperators.sourccey_teleoperator import SourcceyTeleoperator, SourcceyTeleoperatorConfig
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "SourcceyConfig",
     "SourcceyFollower",
     "SourcceyFollowerConfig",
+    "SourcceyKeyboardToBaseActionProcessorStep",
     "SourcceyLeader",
     "SourcceyLeaderConfig",
     "SourcceySDK",
