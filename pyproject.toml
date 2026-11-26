@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "lerobot[feetech]>=0.6,<0.7",
+    "lerobot[feetech]>=0.7.1,<0.8",
     "numpy>=1.24",
     "opencv-python-headless>=4.9",
     "protobuf>=6.31.1,<6.32.0",
@@ -33,10 +33,10 @@ dependencies = [
 
 [project.optional-dependencies]
 record = [
-    "lerobot[core-scripts]>=0.6,<0.7",
+    "lerobot[core-scripts]>=0.7.1,<0.8",
 ]
 dataset = [
-    "lerobot[core-scripts]>=0.6,<0.7",
+    "lerobot[core-scripts]>=0.7.1,<0.8",
 ]
 hardware = [
     "pyserial>=3.5",

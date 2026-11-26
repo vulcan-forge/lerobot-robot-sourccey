@@ -1,8 +1,8 @@
 # Control systems
 
 These guides cover manual control, data collection, action replay, and policy
-deployment. Run the commands from the `lerobot-vulcan` checkout on the
-controller computer unless a guide says otherwise.
+deployment. Run the commands on the controller computer, in an environment with LeRobot
+and this package installed, unless a guide says otherwise.
 
 1. [Teleoperate](01-teleoperate.md) — manually control Sourccey without saving data.
 2. [Record](02-record.md) — collect teleoperated demonstrations.
